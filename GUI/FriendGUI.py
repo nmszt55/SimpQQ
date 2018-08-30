@@ -15,7 +15,7 @@ PORT = 8888
 ADDR = '0.0.0.0'
 
 class MyFrame(QWidget):
-    def __init__(self,user):
+    def __init__(self, user):
         super(MyFrame,self).__init__()
         self.sock = QTcpSocket()
         self.user = user
@@ -169,14 +169,14 @@ class MyFrame(QWidget):
 
     def loadFriends(self):
         Friends = QLabel(self)
-        Friends.resize(200,500)
-        Friends.move(15,185)
+        Friends.resize(200, 500)
+        Friends.move(15, 185)
         Friends.setStyleSheet("border-width: 2px;border-style: solid;border-color: 	#3D3D3D;")
 
-        self.x,self.y = 13,10
+        self.x, self.y = 13, 10
         Friend = MyQLabel(Friends)
-        Friend.resize(170,50)
-        Friend.move(self.x,self.y)
+        Friend.resize(170, 50)
+        Friend.move(self.x, self.y)
         Friend.setStyleSheet("border-width: 2px;border-style: solid;border-color: 	#3D3D3D;")
 
     def chatOne(self):
