@@ -1,6 +1,7 @@
 from web.setting import *
 import pymysql
 from utils.passwdSha1 import Sha1Translate
+from domain.user import user
 
 class SqlHelper(object):
     def __init__(self):
@@ -55,11 +56,21 @@ class SqlHelper(object):
             return False
 
     def getFriends(self, selfid):
-        sql = friendsql
-        param = (selfid,selfid,selfid)
-        self.cr.execute(sql,param)
-        data = self.cr.fetchall()
-        return data
+        try:
+            sql = friendsql
+            param = (selfid,selfid,selfid)
+            self.cr.execute(sql,param)
+            data = self.cr.fetchall()
+            flist = []
+            for x in data:
+                u = user(x[0], x[1])
+                if not x[2]:
+                    u.set_head(x[2])
+                flist.append(u)
+            return flist
+        except Exception as e:
+            print(e)
+            return None
 
 if __name__ == "__main__":
     with SqlHelper() as sh:

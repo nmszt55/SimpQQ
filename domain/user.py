@@ -35,4 +35,4 @@ class user(object):
         if hasattr(self, '__head'):
             return self.__head
         else:
-            return "<null>"
+            return None

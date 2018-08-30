@@ -24,7 +24,7 @@ def login(usern, passwd):
         param.append(passwd)
         cr.execute(sql, param)
         u = cr.fetchone()
-        print(u)
+
         if not u:
             cr.close()
             conn.close()
@@ -37,6 +37,7 @@ def login(usern, passwd):
         conn.close()
 
         return usr
+
     except Exception as e:
         print(e)
         print("出现了未知错误")

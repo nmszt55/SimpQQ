@@ -1,26 +1,34 @@
 #coding:utf-8
-from PyQt5.QtWidgets import QWidget,QPushButton,QLabel,QDesktopWidget
+from PyQt5.QtWidgets import QWidget,QPushButton,QLabel,QDesktopWidget,QMainWindow
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon,QPixmap,QPalette,QBrush
 from PyQt5.QtCore import QCoreApplication,Qt,QTimer,QDataStream
 from PyQt5.Qt import QLineEdit
 from PyQt5.QtNetwork import QTcpSocket
 
+from functools import partial
+
 from GUI.chatGui import ChatGui
 from GUI.moveLabel import myLabel
+from GUI.chatGui import ChatGui
 from GUI.DoubleClickedLabel import MyQLabel
+from web.sqlFrame import SqlHelper
+from web.setting import *
 import sys
 
 PORT = 8888
 ADDR = '0.0.0.0'
 
-class MyFrame(QWidget):
+class MyFrame(QMainWindow):
     def __init__(self, user):
-        super(MyFrame,self).__init__()
+        super(MyFrame, self).__init__()
+        self.sqlhelper = SqlHelper()
         self.sock = QTcpSocket()
         self.user = user
+        self.x, self.y = 13, 10  # 记录朋友框高度
         self.__initUI()
         self.TryToConn()
+
 
     def __initUI(self):
         self.showOnlineMessage("自己")
@@ -28,13 +36,13 @@ class MyFrame(QWidget):
         self.loadExitLabel()
         self.loadHideLabel()
         self.loadHideBtn()
-        self.loadFriends()#判断好友数大于10出现滚动条
-        self.loadMenu()#添加好友功能，加入群功能，创建群
-        self.loadSearch()#搜索好友的框
+        self.loadFriends()  # 判断好友数大于10出现滚动条
+        self.loadMenu()  # 添加好友功能，加入群功能，创建群
+        self.loadSearch()  # 搜索好友的框
         if self.user.get_head() is not None:
-            self.loadSelf(Img=self.user.get_head(),Myname=self.user.get_name())#显示个人信息在顶上
+            self.loadSelf(Img=self.user.get_head(),Myname=self.user.get_name())  # 显示个人信息在顶上
         else:
-            self.loadSelf(Myname=self.user.get_name)
+            self.loadSelf(Myname=self.user.get_name())
         self.loadMain()
 
     def socketConnect(self):
@@ -47,7 +55,7 @@ class MyFrame(QWidget):
 
     def TryToConn(self):
         try:
-            self.sock.connectToHost("127.0.0.1",8888)
+            self.sock.connectToHost("127.0.0.1", 8081)
             if self.sock.state() == self.sock.ConnectingState:
                 self.hlabel.setText("正在连接")
         except Exception as e:
@@ -65,8 +73,8 @@ class MyFrame(QWidget):
         if data[:3] == 'ftp':
             pass
 
-        if data[:3] == "mmg":#创建群聊：格式:mmg,sender,[user1id,user2id....]
-            self.openMulChatWidget()#################################################未实现
+        if data[:3] == "mmg":  # 创建群聊：格式:mmg,sender,[user1id,user2id....]
+            self.openMulChatWidget()  ################################################# 未实现
 
     def showOnlineMessage(self,username):
         # x = OnlineMsg(username)
@@ -144,7 +152,7 @@ class MyFrame(QWidget):
         Hidebtn.move(185,-1)
         Hidebtn.clicked.connect(self.showMinimized)
 
-    def loadSelf(self,Img='../image/default_user.png',Myname="ZZJ"):
+    def loadSelf(self, Img=default_head, Myname="ZZJ"):
 
         HeadLabel = QLabel(self)
         HeadLabel.resize(60,60)
@@ -168,19 +176,41 @@ class MyFrame(QWidget):
         SearchText.setPlaceholderText("在此输入寻找的用户名")
 
     def loadFriends(self):
+        friends = self.sqlhelper.getFriends(self.user.get_id())
+
         Friends = QLabel(self)
         Friends.resize(200, 500)
         Friends.move(15, 185)
-        Friends.setStyleSheet("border-width: 2px;border-style: solid;border-color: 	#3D3D3D;")
+        Friends.setStyleSheet(testBorder)
+        if not friends:
+            Friends.setText("加载朋友失败")
+            return
+        for f in friends:
+            Friend = MyQLabel(Friends)
+            Friend.resize(170, 50)
+            Friend.move(self.x, self.y)
+            Friend.set_user(f, self)
+            Friend.setStyleSheet(testBorder)
 
-        self.x, self.y = 13, 10
-        Friend = MyQLabel(Friends)
-        Friend.resize(170, 50)
-        Friend.move(self.x, self.y)
-        Friend.setStyleSheet("border-width: 2px;border-style: solid;border-color: 	#3D3D3D;")
+            head = f.get_head()
+            if not head:
+                head = default_head
+            fHead = QLabel(Friend)
+            fHead.resize(40, 40)
+            fHead.setStyleSheet(testBorder)
+            fHead.setPixmap(QPixmap(head))
+            fHead.setScaledContents(True)
+            fHead.move(5, 5)
 
-    def chatOne(self):
-        ChatGui()#############################################################################
+            fname = QLabel(Friend)
+            fname.setText(f.get_name())
+            fname.move(55, 10)
+
+            self.y += 55
+
+    def openNewChat(self, user):
+        ChatGui(user)
+
 
 
 

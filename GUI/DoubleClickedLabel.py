@@ -1,8 +1,12 @@
 from PyQt5.QtWidgets import QLabel
 from GUI.chatGui import ChatGui
+from GUI.FriendGUI import *
 
 class MyQLabel(QLabel):
-    def setUser(self,User):
-        self.user = User
+
+    def set_user(self, user, parent):
+        self.user = user
+        self.parent = parent
+
     def mouseDoubleClickEvent(self, e):
-        ChatGui()
+        self.parent.openNewChat(self.user)
