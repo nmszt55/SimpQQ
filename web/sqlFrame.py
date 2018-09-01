@@ -31,11 +31,39 @@ class SqlHelper(object):
             print("出错")
             return
 
+    def fetch_an_friend(self,IdOrName):
+        try:
+            try:
+                IdOrName = int(IdOrName)
+            except:
+                sql = "select id,nickname,head from user WHERE nickname=%s"
+            else:
+                sql = "select id,nickname,head from user WHERE id=%s"
+
+            param = (IdOrName)
+            self.cr.execute(sql, param)
+            usr = self.cr.fetchone()
+
+            if not usr:
+                return None
+
+            ur = user(usr[0], usr[1])
+            if not usr[2]:
+                ur.set_head(default_head)
+                return ur
+
+            ur.set_head(usr[2])
+            return ur
+        except Exception as e:
+            print("查找好友出错")
+            print(e)
+            return None
+
     def addfriend(self, selfid, friendid):
         try:
             sql = 'insert into friend(uid1,uid2) values(%s,%s)'
             param = (selfid, friendid)
-            self.cr.execute(sql,param)
+            self.cr.execute(sql, param)
             self.__conn.commit()
             return True
         except Exception as e:
@@ -55,7 +83,7 @@ class SqlHelper(object):
             self.__conn.rollback()
             return False
 
-    def getFriends(self, selfid):
+    def getFriends(self, selfid):  # 查找好友
         try:
             sql = friendsql
             param = (selfid,selfid,selfid)
@@ -71,6 +99,8 @@ class SqlHelper(object):
         except Exception as e:
             print(e)
             return None
+
+sqlhelper = SqlHelper()
 
 if __name__ == "__main__":
     with SqlHelper() as sh:

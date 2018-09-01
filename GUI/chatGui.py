@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import QWidget,QPushButton,QHBoxLayout,QScrollBar
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon,QFont
-from PyQt5.QtCore import QCoreApplication,Qt,QDataStream,QByteArray
+from PyQt5.QtCore import QCoreApplication,Qt
 from PyQt5.Qt import QTextEdit,QTextCursor
-from PyQt5.QtNetwork import QTcpSocket
+from PyQt5.QtNetwork import QTcpSocket,QAbstractSocket
+
 
 from GUI.moveLabel import myLabel
 
@@ -15,6 +16,7 @@ class ChatGui(QWidget):
     def __init__(self, *args):
         if not args:
             return
+
         if len(args) != 1:
             self.type = "mul"
             self.users = args
@@ -22,7 +24,8 @@ class ChatGui(QWidget):
             self.type = "sin"
             self.users = args[0]
         self.sock = QTcpSocket()
-        self.sock.connectToHost("127.0.0.1", 8888)
+        self.sock.readyRead.connect(self.ready_read)
+        self.sock.connectToHost("176.234.83.12", 8888)
 
         super(ChatGui, self).__init__()
         self.initUI()
@@ -54,7 +57,7 @@ class ChatGui(QWidget):
         hlabel.setText("             --对象")
         hlabel.setFixedWidth(472)
         hlabel.setFixedHeight(30)
-        hlabel.move(0,0)
+        hlabel.move(0, 0)
         # hlabel.setHidden(True)
         self.m_flag = False
 
@@ -63,18 +66,32 @@ class ChatGui(QWidget):
 
     def loadSendBtn(self):
         sendbtn = QPushButton(self)
-        sendbtn.resize(120,80)
-        sendbtn.move(370,365)
+        sendbtn.resize(120, 80)
+        sendbtn.move(370, 365)
         sendbtn.setText('发送')
-        sendbtn.setFont(QFont("Microsoft YaHei",28))
+        sendbtn.setFont(QFont("Microsoft YaHei", 28))
         sendbtn.clicked.connect(self.doSend)
 
     def doSend(self):#处理发送消息函数
         msg = self.chatLabel.toPlainText()#获取内容
         self.chatLabel.setText("")
         self.sock.writeData(msg.encode())
+        if self.sock.state != QAbstractSocket.ConnectedState:
+            msg = "[无连接]"+msg
         #判断消息发送成功，如果失败，在前面加上红字：[发送失败]
         self.addTextInEdit(msg)
+
+    def ready_read(self):
+        newmsg = self.sock.read(1024).decode()
+        username = self.analysis(newmsg)
+        print(newmsg)
+        self.addTextInEdit(username+"\r\n"+newmsg)
+
+    def analysis(self,msg):
+        if type(self.users) != tuple:
+            return self.users.get_name()
+        else:
+            return "abc"
 
     def addTextInEdit(self,msg):
         self.ChatLabel.insertPlainText(msg+"\r\n")
@@ -117,8 +134,6 @@ class ChatGui(QWidget):
         self.chatLabel = QTextEdit(self)
         self.chatLabel.resize(340, 80)
         self.chatLabel.move(20, 365)
-
-
 
     def loadRight(self):
         if self.type == "mul":

@@ -12,6 +12,7 @@ from GUI.chatGui import ChatGui
 from GUI.moveLabel import myLabel
 from GUI.chatGui import ChatGui
 from GUI.DoubleClickedLabel import MyQLabel
+from GUI.AddFriend import AddFriend
 from web.sqlFrame import SqlHelper
 from web.setting import *
 import sys
@@ -25,6 +26,7 @@ class MyFrame(QMainWindow):
         self.sqlhelper = SqlHelper()
         self.sock = QTcpSocket()
         self.user = user
+        self.addfriend = AddFriend()
         self.x, self.y = 13, 10  # 记录朋友框高度
         self.__initUI()
         self.TryToConn()
@@ -107,6 +109,7 @@ class MyFrame(QMainWindow):
         addBtn.setStyleSheet("QPushButton{border-radius:20px}")
         addBtn.setStyleSheet("QPushButton:hover{background-color:red}")
         # addBtn.setStyleSheet('background-color:transparent')
+        addBtn.clicked.connect(self.open_add_wit)
 
         multiBtn = QPushButton(self)
         multiBtn.setIcon(QIcon("../image/multiple.png"))
@@ -115,8 +118,11 @@ class MyFrame(QMainWindow):
         multiBtn.setStyleSheet("QPushButton:hover{background-color:red}")
         # multiBtn.setStyleSheet('background-color:transparent')
 
-        addBtn.move(20,105)
-        multiBtn.move(60,105)
+        addBtn.move(20, 105)
+        multiBtn.move(60, 105)
+
+    def open_add_wit(self):
+        self.addfriend.handle_click()
 
     def loadMain(self):
         self.resize(240,700)
