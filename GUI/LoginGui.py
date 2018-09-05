@@ -7,31 +7,54 @@ from PyQt5.QtWidgets import QPushButton,QWidget,QMessageBox,QDesktopWidget,QMain
 from PyQt5.QtWidgets import QAction,qApp,QTextEdit,QHBoxLayout,QVBoxLayout,QGridLayout,QLineEdit,QLabel
 from PyQt5.QtCore import QCoreApplication,Qt,QUrl,QTimer
 from utils.passwdSha1 import Sha1Translate
-from web import WebHelper,Userlogin
-
+from PyQt5.QtNetwork import QTcpSocket,QAbstractSocket
 from GUI.MainGui import MainGui
 from GUI.FriendGUI import MyFrame
+
+from web.setting import *
+from utils.UserMsgUnpick import unpick
 
 
 class Mypyqt1(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.sock = QTcpSocket()
         # self.initUI()
+        self.try_to_connect()
         self.timer = QTimer()
+        self.sock.readyRead.connect(self.hand_msg)
         self.initUI()
+
+    def try_to_connect(self):
+        self.sock.connectToHost(SER_HOST, SER_PORT)
+
+    def hand_msg(self):
+        response = self.sock.read(1024).decode()
+        print(response)
+        if response.startswith(RESPONSE_HEADS["LOGIN_SUCCESS"]):
+            msg = response.split(SEPARATE)
+            MD5 = msg[1]  # id秘钥
+            user = unpick(msg[2])  # 用户的信息
+
+            self.close()
+            MyFrame(user, self.sock, MD5)
+
+        if response.startswith(FAILED_HEADS["LOGIN_FAILED"]):
+            self.loginfailed()
+        else:
+            self.loginfailed("出现了未知错误")
 
     def login(self):
         username = self.logintext.text()
         password = Sha1Translate(self.password.text())
-        user = Userlogin.login(username,password)
 
-        if not user:
-            self.loginfailed()
-        else:
-            self.close()
-            friends = WebHelper.getFriendsByUser(user)
-            MyFrame(user)
+        if self.sock.state() != 3:
+            self.loginfailed("请稍等,正在连接")
+            return
+        msg = REQUEST_HEADS["LOGIN_HEAD"] + SEPARATE + username + SEPARATE + password
+        self.sock.writeData(msg.encode())
+        print(msg)
 
     def loadBackground(self):
         Blabel = QLabel(self)
@@ -40,9 +63,9 @@ class Mypyqt1(QWidget):
         Blabel.setMovie(self.bgif)
         self.bgif.start()
 
-    def loginfailed(self,str="登录失败,请检查你的用户名和密码"):
-        self.Iconing.resize(0,0)
-        self.LoginFail.setText(str)
+    def loginfailed(self, strl="登录失败,请检查你的用户名和密码"):
+        self.Iconing.resize(0, 0)
+        self.LoginFail.setText(strl)
         self.LoginFail.setStyleSheet("color:red")
 
     def loadFont(self):

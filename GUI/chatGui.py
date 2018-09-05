@@ -1,9 +1,9 @@
-from PyQt5.QtWidgets import QWidget,QPushButton,QHBoxLayout,QScrollBar
+from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QScrollBar
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon,QFont
-from PyQt5.QtCore import QCoreApplication,Qt
-from PyQt5.Qt import QTextEdit,QTextCursor
-from PyQt5.QtNetwork import QTcpSocket,QAbstractSocket
+from PyQt5.QtCore import QCoreApplication, Qt
+from PyQt5.Qt import QTextEdit, QTextCursor
+from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket
 
 
 from GUI.moveLabel import myLabel
@@ -106,7 +106,6 @@ class ChatGui(QWidget):
         self.ChatLabel.resize(340,220)
         self.ChatLabel.move(20,110)
         self.ChatLabel.textChanged.connect(self.loadscrollbar)
-
 
     def loadscrollbar(self):
         self.scr = QScrollBar(self)

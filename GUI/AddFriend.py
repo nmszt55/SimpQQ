@@ -20,9 +20,18 @@ class AddFriend(QWidget):
         # self.loadHiddenLabel()
         # self.loadExitMenu()
         self.loadFriend()
+        self.addbtn()
+
         self.loadSelf()
         self.closelabel()
 
+    def addbtn(self):
+        self.add_friend_btn = QPushButton(self)
+        self.add_friend_btn.resize(60, 30)
+        self.add_friend_btn.setText("添加好友")
+        self.add_friend_btn.clicked.connect(self.addfriend)
+        self.add_friend_btn.move(145, 180)
+        self.add_friend_btn.close()
 
     def hidelabel(self):
         self.headlabel = QLabel(self)
@@ -31,6 +40,11 @@ class AddFriend(QWidget):
         self.headlabel.setStyleSheet(testBorder)
         self.namelabel.setStyleSheet(testBorder)
         self.idlabel.setStyleSheet(testBorder)
+
+    def addfriend(self):
+        opid = self.idlabel.text()
+        data = "<addfriend>,"+opid+","+self.uid
+        self.sock.writeData("")
 
     def closelabel(self):
         self.idlabel.close()
@@ -42,7 +56,9 @@ class AddFriend(QWidget):
         self.center()
         self.setWindowTitle("添加好友")
 
-    def handle_click(self):
+    def handle_click(self,userid,sock):
+        self.sock = sock
+        self.uid = userid
         self.show()
 
     def loadInput(self):
@@ -89,12 +105,17 @@ class AddFriend(QWidget):
             self.namelabel.move(130, 150)
 
             self.headlabel.resize(70, 70)
-            self.headlabel.setPixmap(QPixmap(head))
+            if not head:
+                self.headlabel.setPixmap(QPixmap(default_head))
+            else:
+                self.headlabel.setPixmap(QPixmap(head))
+            self.headlabel.setScaledContents(True)
             self.headlabel.move(140, 30)
 
             self.idlabel.show()
             self.headlabel.show()
             self.namelabel.show()
+            self.add_friend_btn.show()
 
     def closeEvent(self, event):
         event.accept()

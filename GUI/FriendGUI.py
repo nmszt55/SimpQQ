@@ -7,24 +7,22 @@ from PyQt5.Qt import QLineEdit
 from PyQt5.QtNetwork import QTcpSocket
 
 from functools import partial
-
 from GUI.chatGui import ChatGui
 from GUI.moveLabel import myLabel
 from GUI.chatGui import ChatGui
 from GUI.DoubleClickedLabel import MyQLabel
 from GUI.AddFriend import AddFriend
-from web.sqlFrame import SqlHelper
-from web.setting import *
+
 import sys
 
 PORT = 8888
 ADDR = '0.0.0.0'
 
 class MyFrame(QMainWindow):
-    def __init__(self, user):
+    def __init__(self, user, sock, MD5):
         super(MyFrame, self).__init__()
         self.sqlhelper = SqlHelper()
-        self.sock = QTcpSocket()
+        self.sock = sock
         self.user = user
         self.addfriend = AddFriend()
         self.x, self.y = 13, 10  # 记录朋友框高度
@@ -41,10 +39,11 @@ class MyFrame(QMainWindow):
         self.loadFriends()  # 判断好友数大于10出现滚动条
         self.loadMenu()  # 添加好友功能，加入群功能，创建群
         self.loadSearch()  # 搜索好友的框
-        if self.user.get_head() is not None:
-            self.loadSelf(Img=self.user.get_head(),Myname=self.user.get_name())  # 显示个人信息在顶上
+        print("头像嗷嗷嗷嗷嗷",self.user.get_head())
+        if self.user.get_head() == None:
+            self.loadSelf(Myname=self.user.get_name())  # 显示个人信息在顶上
         else:
-            self.loadSelf(Myname=self.user.get_name())
+            self.loadSelf(Img=self.user.get_head(), Myname=self.user.get_name())
         self.loadMain()
 
     def socketConnect(self):
@@ -57,7 +56,7 @@ class MyFrame(QMainWindow):
 
     def TryToConn(self):
         try:
-            self.sock.connectToHost("127.0.0.1", 8081)
+            self.sock.connectToHost(SER_HOST, SER_PORT)
             if self.sock.state() == self.sock.ConnectingState:
                 self.hlabel.setText("正在连接")
         except Exception as e:
@@ -99,7 +98,7 @@ class MyFrame(QMainWindow):
 
     def loadBackground(self):
         pat = QPalette()
-        pat.setBrush(self.backgroundRole(),QBrush(QPixmap("../image/background1.jpg")))
+        pat.setBrush(self.backgroundRole(), QBrush(QPixmap("../image/background1.jpg")))
         self.setPalette(pat)
 
     def loadMenu(self):
@@ -122,10 +121,10 @@ class MyFrame(QMainWindow):
         multiBtn.move(60, 105)
 
     def open_add_wit(self):
-        self.addfriend.handle_click()
+        self.addfriend.handle_click(self.user.get_id(), self.sock)
 
     def loadMain(self):
-        self.resize(240,700)
+        self.resize(240, 700)
         self.setWindowFlags(Qt.FramelessWindowHint)
 
         pos = QDesktopWidget().availableGeometry().topRight()
@@ -158,7 +157,7 @@ class MyFrame(QMainWindow):
         Hidebtn.move(185,-1)
         Hidebtn.clicked.connect(self.showMinimized)
 
-    def loadSelf(self, Img=default_head, Myname="ZZJ"):
+    def loadSelf(self, Img=DEFAULT_HEAD, Myname="ZZJ"):
 
         HeadLabel = QLabel(self)
         HeadLabel.resize(60,60)
@@ -200,7 +199,7 @@ class MyFrame(QMainWindow):
 
             head = f.get_head()
             if not head:
-                head = default_head
+                head = DEFAULT_HEAD
             fHead = QLabel(Friend)
             fHead.resize(40, 40)
             fHead.setStyleSheet(testBorder)
