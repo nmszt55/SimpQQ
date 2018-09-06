@@ -1,9 +1,9 @@
-from PyQt5.QtWidgets import QWidget,QDesktopWidget,QLineEdit,QPushButton,QLabel
+from PyQt5.QtWidgets import QWidget,QDesktopWidget,QLineEdit,QPushButton,QLabel,QMessageBox
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QPixmap
 import sys
 
-from web.sqlFrame import sqlhelper
+from utils.UserMsgUnpick import addfriendunpick
 from web.setting import *
 
 
@@ -25,6 +25,12 @@ class AddFriend(QWidget):
         self.loadSelf()
         self.closelabel()
 
+    def md5_analyse(self, psw):
+        if self.Key != psw:
+            return False
+        else:
+            return True
+
     def addbtn(self):
         self.add_friend_btn = QPushButton(self)
         self.add_friend_btn.resize(60, 30)
@@ -43,8 +49,8 @@ class AddFriend(QWidget):
 
     def addfriend(self):
         opid = self.idlabel.text()
-        data = "<addfriend>,"+opid+","+self.uid
-        self.sock.writeData("")
+        data = REQUEST_HEADS["ADD_FRIEND_HEAD"] + SEPARATE + opid + SEPARATE + self.uid + SEPARATE + self.md5
+        self.sock.writeData(data)
 
     def closelabel(self):
         self.idlabel.close()
@@ -56,9 +62,11 @@ class AddFriend(QWidget):
         self.center()
         self.setWindowTitle("添加好友")
 
-    def handle_click(self,userid,sock):
+    def handle_click(self, userid, sock , key):
         self.sock = sock
+        self.sock.readyRead.connect(self.analyse_msg)
         self.uid = userid
+        self.md5 = key
         self.show()
 
     def loadInput(self):
@@ -74,14 +82,16 @@ class AddFriend(QWidget):
         submitBtn.move(274, 250)
         submitBtn.clicked.connect(self.search_friend)
 
+
     def search_friend(self):
         id_or_name = self.lineText.text()
-        user = sqlhelper.fetch_an_friend(id_or_name)
-        if not user:
-            self.nullLabel.setText("什么都没找到哦^-^")
-        else:
-            self.friend = user
-            self.loadFriend()
+        send_str = REQUEST_HEADS["GET_USER_HEAD"] + SEPARATE + id_or_name + SEPARATE + self.md5
+        self.sock.writeData(send_str.encode())
+        # if not user:
+        #     self.nullLabel.setText("什么都没找到哦^-^")
+        # else:
+        #     self.friend = user
+        #     self.loadFriend()
 
 
     def loadFriend(self):
@@ -106,7 +116,7 @@ class AddFriend(QWidget):
 
             self.headlabel.resize(70, 70)
             if not head:
-                self.headlabel.setPixmap(QPixmap(default_head))
+                self.headlabel.setPixmap(QPixmap(DEFAULT_HEAD))
             else:
                 self.headlabel.setPixmap(QPixmap(head))
             self.headlabel.setScaledContents(True)
@@ -127,8 +137,36 @@ class AddFriend(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
+    def analyse_msg(self):
+        data = self.sock.read(1024).decode()
+        md5, head = data.split(SEPARATE)[-1], data.split(SEPARATE)[0]
+
+        if not self.md5_analyse(md5):
+            return
+        if head == FAILED_HEADS["ADD_FRIEND_FAILED"]:
+            self.closelabel()
+            self.nullLabel.setText("添加好友失败")
+
+        if head == FAILED_HEADS["NO_USER_HEAD"]:
+            self.closelabel()
+            self.nullLabel.setText("未找到用户")
+
+        if head == FAILED_HEADS["FRIEND_ALREADY_EXISTS"]:
+            self.show_warn_msgbox("好友已经存在不需要添加")
+
+        if head == RESPONSE_HEADS["GET_USR_SUCCESS"]:
+            userdata = data.split(SEPARATE)[1]
+            user = addfriendunpick(userdata)
+            if not user:
+                print("代码出错啦")
+                return
+            self.friend = user
+
+    def show_warn_msgbox(self, msg):
+        reply = QMessageBox.information(self, "提示", msg,QMessageBox.Yes)
 
 if __name__ == "__main__":
     appstart = QtWidgets.QApplication(sys.argv)
     addfriend = AddFriend()
+    addfriend.show_warn_msgbox()
     sys.exit(appstart.exec_())

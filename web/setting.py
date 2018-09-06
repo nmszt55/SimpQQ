@@ -1,6 +1,8 @@
 # 地址
 SER_HOST = '127.0.0.1'
 SER_PORT = 8000
+# 接收数据大小
+MAX_DATA = 2048
 # 定义分隔符
 SEPARATE = ","
 ATTR_SERARATE = "&"
@@ -9,6 +11,10 @@ USER_SEPARATE = "$"
 testBorder = "border-width: 2px;border-style: solid;border-color: 	#3D3D3D;"
 DEFAULT_HEAD = '../image/default_user.png'
 # 标准消息头
+CLIENT_HEADS = {
+    "ADD_FRIEND_IN_LABEL": "<addfriend>",
+}
+
 REQUEST_HEADS = {
     "ADD_FRIEND_HEAD": "<addfriend>",
     "LOGIN_HEAD": "<login>",

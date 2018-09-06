@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import QAction,qApp,QTextEdit,QHBoxLayout,QVBoxLayout,QGrid
 from PyQt5.QtCore import QCoreApplication,Qt,QUrl,QTimer
 from utils.passwdSha1 import Sha1Translate
 from PyQt5.QtNetwork import QTcpSocket,QAbstractSocket
-from GUI.MainGui import MainGui
 from GUI.FriendGUI import MyFrame
 
 from web.setting import *
@@ -31,14 +30,13 @@ class Mypyqt1(QWidget):
 
     def hand_msg(self):
         response = self.sock.read(1024).decode()
-        print(response)
         if response.startswith(RESPONSE_HEADS["LOGIN_SUCCESS"]):
             msg = response.split(SEPARATE)
             MD5 = msg[1]  # id秘钥
             user = unpick(msg[2])  # 用户的信息
-
+            self.sock.close()
             self.close()
-            MyFrame(user, self.sock, MD5)
+            MyFrame(user, MD5)
 
         if response.startswith(FAILED_HEADS["LOGIN_FAILED"]):
             self.loginfailed()
@@ -54,7 +52,6 @@ class Mypyqt1(QWidget):
             return
         msg = REQUEST_HEADS["LOGIN_HEAD"] + SEPARATE + username + SEPARATE + password
         self.sock.writeData(msg.encode())
-        print(msg)
 
     def loadBackground(self):
         Blabel = QLabel(self)

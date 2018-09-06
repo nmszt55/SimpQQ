@@ -1,8 +1,8 @@
 #coding:utf-8
-from PyQt5.QtWidgets import QWidget,QPushButton,QLabel,QDesktopWidget,QMainWindow
+from PyQt5.QtWidgets import QPushButton,QLabel,QDesktopWidget,QMainWindow
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon,QPixmap,QPalette,QBrush
-from PyQt5.QtCore import QCoreApplication,Qt,QTimer,QDataStream
+from PyQt5.QtCore import QCoreApplication,Qt,QTimer
 from PyQt5.Qt import QLineEdit
 from PyQt5.QtNetwork import QTcpSocket
 
@@ -12,23 +12,28 @@ from GUI.moveLabel import myLabel
 from GUI.chatGui import ChatGui
 from GUI.DoubleClickedLabel import MyQLabel
 from GUI.AddFriend import AddFriend
-
+from web.setting import *
+from utils.UserMsgUnpick import friendunpick
 import sys
 
 PORT = 8888
 ADDR = '0.0.0.0'
 
 class MyFrame(QMainWindow):
-    def __init__(self, user, sock, MD5):
+    def __init__(self, user, MD5):
         super(MyFrame, self).__init__()
-        self.sqlhelper = SqlHelper()
-        self.sock = sock
-        self.user = user
-        self.addfriend = AddFriend()
-        self.x, self.y = 13, 10  # 记录朋友框高度
-        self.__initUI()
-        self.TryToConn()
+        self.sock = QTcpSocket()
+        self.sock.connectToHost(SER_HOST, SER_PORT)
 
+        self.user = user
+        self.Key = MD5
+        self.addfriend = AddFriend()
+        self.__initUI()
+        self.sock.connected.connect(self.SendRequest)
+        self.sock.readyRead.connect(self.Readytoread)
+
+    def resetFriendlocation(self):
+        self.x, self.y = 13, 10
 
     def __initUI(self):
         self.showOnlineMessage("自己")
@@ -36,46 +41,62 @@ class MyFrame(QMainWindow):
         self.loadExitLabel()
         self.loadHideLabel()
         self.loadHideBtn()
-        self.loadFriends()  # 判断好友数大于10出现滚动条
+        self.resetFriendlocation()
+          # 判断好友数大于10出现滚动条
         self.loadMenu()  # 添加好友功能，加入群功能，创建群
         self.loadSearch()  # 搜索好友的框
-        print("头像嗷嗷嗷嗷嗷",self.user.get_head())
+        self.loadFriends()
+
         if self.user.get_head() == None:
             self.loadSelf(Myname=self.user.get_name())  # 显示个人信息在顶上
         else:
             self.loadSelf(Img=self.user.get_head(), Myname=self.user.get_name())
-        self.loadMain()
-
-    def socketConnect(self):
-        self.sock.connected.connect(self.SendRequest)
-        self.sock.readyRead.connect(self.Readytoread)
-        self.sock.disconnected().connect(self.DeleteLater)
 
     def SendRequest(self):
         self.hlabel.setText("Connecting...")
 
-    def TryToConn(self):
-        try:
-            self.sock.connectToHost(SER_HOST, SER_PORT)
-            if self.sock.state() == self.sock.ConnectingState:
-                self.hlabel.setText("正在连接")
-        except Exception as e:
-            print(e)
-            self.hlabel.setText("连接失败")
+    def getfriends(self):
+        requestdata = REQUEST_HEADS["GET_FRIENDS_HEAD"] + SEPARATE + self.user.get_id() + SEPARATE + self.Key
+        self.sock.writeData(requestdata.encode())
 
     def Readytoread(self):
-        data = self.sock.readAll().decode()
+        print("接收消息")
+        data = self.sock.read(MAX_DATA).decode()
+        print("消息", data)
+        if not data or data=="":
+            return
+        try:
+            datalist = data.split(SEPARATE)
 
-        if data[:3] == "msg":
-            """type,sendrid,recvid,data"""
-            data = data.split(",")
-            friends = data[2].split(" ")
+            if not self.md5_analyse(datalist[-1]):
+                print("无MD5,不执行:",datalist[-1])
+                return
+            if datalist[0] not in RESPONSE_HEADS.values() and datalist[0] not in FAILED_HEADS.values():
+                print("无效解析", datalist[0])
+                return
+            self.analyse_data(datalist)
+        except Exception as e:
+            print("分析过程出现问题",e)
+            return
 
-        if data[:3] == 'ftp':
+    def md5_analyse(self, psw):
+        if self.Key != psw:
+            return False
+        else:
+            return True
+
+    def analyse_data(self, datalist):
+        # 获取朋友的格式 <...>,friend_data
+        if datalist[0] == RESPONSE_HEADS["GET_FRIENDS_SUCCESS"]:
+            self.friends = friendunpick(datalist[1])
+            self.loadFriends(self.friends)
+
+        if datalist[0] == RESPONSE_HEADS["DELETE_FRIEND_SUCCESS"]:
             pass
 
-        if data[:3] == "mmg":  # 创建群聊：格式:mmg,sender,[user1id,user2id....]
-            self.openMulChatWidget()  ################################################# 未实现
+        if datalist[0] == FAILED_HEADS["NO_FRIEND_HEAD"]:
+            self.loadFriends(None)
+
 
     def showOnlineMessage(self,username):
         # x = OnlineMsg(username)
@@ -121,7 +142,7 @@ class MyFrame(QMainWindow):
         multiBtn.move(60, 105)
 
     def open_add_wit(self):
-        self.addfriend.handle_click(self.user.get_id(), self.sock)
+        self.addfriend.handle_click(self.user.get_id(), self.sock, self.Key)
 
     def loadMain(self):
         self.resize(240, 700)
@@ -147,25 +168,25 @@ class MyFrame(QMainWindow):
         exitbtn = QPushButton(self)
         exitbtn.setIcon(QIcon("../image/exit2.png"))
         exitbtn.adjustSize()
-        exitbtn.move(213,-1)
+        exitbtn.move(213, -1)
         exitbtn.clicked.connect(QCoreApplication.instance().quit)
 
     def loadHideBtn(self):
         Hidebtn = QPushButton(self)
         Hidebtn.setIcon(QIcon("../image/hide.png"))
         Hidebtn.adjustSize()
-        Hidebtn.move(185,-1)
+        Hidebtn.move(185, -1)
         Hidebtn.clicked.connect(self.showMinimized)
 
-    def loadSelf(self, Img=DEFAULT_HEAD, Myname="ZZJ"):
+    def loadSelf(self, Img=DEFAULT_HEAD, Myname="网络故障,请重新登录"):
 
         HeadLabel = QLabel(self)
-        HeadLabel.resize(60,60)
-        HeadLabel.move(25,40)
+        HeadLabel.resize(60, 60)
+        HeadLabel.move(25, 40)
         Head = QPixmap(Img)
         # Head.scaled(40,40,aspectRatioMode=Qt.KeepAspectRatio)
         HeadLabel.setPixmap(Head)
-        HeadLabel.setScaledContents(True)#设置图片自动缩放
+        HeadLabel.setScaledContents(True)  # 设置图片自动缩放
         HeadLabel.setStyleSheet("border:2px solid #363636")
 
         name = QLabel(self)
@@ -180,15 +201,15 @@ class MyFrame(QMainWindow):
         SearchText.setStyleSheet('background-color:transparent')
         SearchText.setPlaceholderText("在此输入寻找的用户名")
 
-    def loadFriends(self):
-        friends = self.sqlhelper.getFriends(self.user.get_id())
+    def loadFriends(self, friends=None):
 
         Friends = QLabel(self)
         Friends.resize(200, 500)
         Friends.move(15, 185)
         Friends.setStyleSheet(testBorder)
+
         if not friends:
-            Friends.setText("加载朋友失败")
+            self.getfriends()
             return
         for f in friends:
             Friend = MyQLabel(Friends)
@@ -212,6 +233,7 @@ class MyFrame(QMainWindow):
             fname.move(55, 10)
 
             self.y += 55
+        self.loadMain()
 
     def openNewChat(self, user):
         ChatGui(user)
