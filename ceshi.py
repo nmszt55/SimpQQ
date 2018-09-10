@@ -1,5 +1,5 @@
-from socket import *
+def get(m,n):
+    li = []
+    t = set()
+    for x in range(1,m):
 
-def start():
-    sock = socket()
-    sock.bind(("176.234.83.12"),8888)

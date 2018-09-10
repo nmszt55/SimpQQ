@@ -22,7 +22,7 @@ class user(object):
         if hasattr(self,'__intro'):
             return self.__intro
         else:
-            return "<null>"
+            return None
 
     def get_id(self):
         return self.__id

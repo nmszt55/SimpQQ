@@ -26,7 +26,7 @@ class AddFriend(QWidget):
         self.closelabel()
 
     def md5_analyse(self, psw):
-        if self.Key != psw:
+        if self.md5 != psw:
             return False
         else:
             return True
@@ -53,6 +53,8 @@ class AddFriend(QWidget):
         self.sock.writeData(data)
 
     def closelabel(self):
+        self.nullLabel.show()
+        self.add_friend_btn.close()
         self.idlabel.close()
         self.headlabel.close()
         self.namelabel.close()
@@ -64,7 +66,6 @@ class AddFriend(QWidget):
 
     def handle_click(self, userid, sock , key):
         self.sock = sock
-        self.sock.readyRead.connect(self.analyse_msg)
         self.uid = userid
         self.md5 = key
         self.show()
@@ -137,30 +138,6 @@ class AddFriend(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def analyse_msg(self):
-        data = self.sock.read(1024).decode()
-        md5, head = data.split(SEPARATE)[-1], data.split(SEPARATE)[0]
-
-        if not self.md5_analyse(md5):
-            return
-        if head == FAILED_HEADS["ADD_FRIEND_FAILED"]:
-            self.closelabel()
-            self.nullLabel.setText("添加好友失败")
-
-        if head == FAILED_HEADS["NO_USER_HEAD"]:
-            self.closelabel()
-            self.nullLabel.setText("未找到用户")
-
-        if head == FAILED_HEADS["FRIEND_ALREADY_EXISTS"]:
-            self.show_warn_msgbox("好友已经存在不需要添加")
-
-        if head == RESPONSE_HEADS["GET_USR_SUCCESS"]:
-            userdata = data.split(SEPARATE)[1]
-            user = addfriendunpick(userdata)
-            if not user:
-                print("代码出错啦")
-                return
-            self.friend = user
 
     def show_warn_msgbox(self, msg):
         reply = QMessageBox.information(self, "提示", msg,QMessageBox.Yes)

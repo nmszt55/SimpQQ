@@ -1,12 +1,17 @@
 # 地址
 SER_HOST = '127.0.0.1'
 SER_PORT = 8000
+
 # 接收数据大小
 MAX_DATA = 2048
+
 # 定义分隔符
 SEPARATE = ","
 ATTR_SERARATE = "&"
 USER_SEPARATE = "$"
+MSG_START = "&start<<"
+MSG_END = "&end>>"
+
 # 默认样式
 testBorder = "border-width: 2px;border-style: solid;border-color: 	#3D3D3D;"
 DEFAULT_HEAD = '../image/default_user.png'
@@ -23,7 +28,8 @@ REQUEST_HEADS = {
     "GET_FRIENDS_HEAD": "<getfriends>",
     "REGISTER_HEAD": "<register>",
     "DISCONNECT_HEAD": "<quit>",
-    "SEND_MSG_HEAD": "<sendmsg>"  # 格式:<sendmsg>,sessionid,自己id,目标id,判断session是否正确
+    "SEND_MSG_HEAD": "<sendmsg>",  # 格式:<..>
+    "CORRECT_ADDR_HEAD": "<correctaddr>"
 }
 
 FAILED_HEADS = {
@@ -35,7 +41,10 @@ FAILED_HEADS = {
     "FORM_ERROR": "<formerror>",
     "LOGIN_FAILED": "<loginfailed>",
     "ADD_FRIEND_FAILED": "<addfriendfailed>",
-    "FRIEND_ALREADY_EXISTS": "<friendalreadyexists>"
+    "FRIEND_ALREADY_EXISTS": "<friendalreadyexists>",
+    "SEND_MESSAGE_FAILED": "<sendmsgfailed>",
+    "CORRECT_PORT_FAILED": "<changeportfailed>",
+    "NOT_ONLINE_ERROR": "<friendnotonline>"
 }
 
 RESPONSE_HEADS = {
@@ -45,4 +54,9 @@ RESPONSE_HEADS = {
     "REGISTER_SUCCESS": '<registersuccess>',
     "LOGIN_SUCCESS": "<loginsuccess>",
     "ADD_FRIEND_SUCCESS": "<addfriendsuccess>",
+    "CORRECT_PORT_SUCCESS": "<correctportsuccess>"
+}
+
+RECEIVE_MSG_HEAD = {
+    "NEW_MSG_HEAD": "<newmsg>"  # 格式:<..>,fromid,opid,neirong
 }

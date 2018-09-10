@@ -1,31 +1,32 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QScrollBar
+from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QScrollBar, QLabel
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import QIcon,QFont
+from PyQt5.QtGui import QIcon, QFont, QPixmap
 from PyQt5.QtCore import QCoreApplication, Qt
 from PyQt5.Qt import QTextEdit, QTextCursor
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket
 
-
+from web.setting import *
 from GUI.moveLabel import myLabel
-
 import sys
 
 
 class ChatGui(QWidget):
 
-    def __init__(self, *args):
+    def __init__(self, *args, md5, selfid, msg):
         if not args:
             return
 
         if len(args) != 1:
             self.type = "mul"
-            self.users = args
         else:
             self.type = "sin"
-            self.users = args[0]
+        self.msg = msg
+        self.users = args
+        self.selfid = selfid
+        self.md5 = md5
         self.sock = QTcpSocket()
         self.sock.readyRead.connect(self.ready_read)
-        self.sock.connectToHost("176.234.83.12", 8888)
+        self.sock.connectToHost(SER_HOST, SER_PORT)
 
         super(ChatGui, self).__init__()
         self.initUI()
@@ -41,9 +42,45 @@ class ChatGui(QWidget):
         self.loadsendmsgText()
         self.loadSendBtn()
         # self.loadscrollbar()
+        self.loadInf()
 
         self.show()
 
+    def loadInf(self):
+        self.inf_label = QLabel(self)
+        self.inf_label.resize(120, 220)
+        self.inf_label.move(370, 110)
+        self.inf_label.setStyleSheet(testBorder)
+
+        if self.type == "sin":  # 单人聊天
+            headlabel = QLabel(self.inf_label)
+            headlabel.resize(70, 70)
+            headlabel.move(25, 25)
+            headlabel.setStyleSheet(testBorder)
+            if not self.users[0].get_head():
+                headlabel.setPixmap(QPixmap(DEFAULT_HEAD))
+            else:
+                headlabel.setPixmap(QPixmap(self.users[0].get_head()))
+            headlabel.setScaledContents(True)
+
+            instrlabel = QLabel(self.inf_label)
+            instrlabel.resize(100, 115)
+            instrlabel.move(10, 100)
+            if not self.users[0].get_intro():
+                instrlabel.setText("这家伙很懒,什么都没有写")
+            else:
+                instrlabel.setText(self.users[0].get_intro())
+            instrlabel.setWordWrap(True)
+            instrlabel.setAlignment(Qt.AlignTop)
+
+        if self.type == "mul":
+            y = 10
+            for user in self.users:
+                llabel = QLabel(self.inf_label)
+                llabel.setText(user.get_id()+" "+user.get_name())
+                llabel.resize(100, 20)
+                llabel.move(10, y)
+                y += 25
 
     def loadExitLabel(self):
         exitbtn = QPushButton(self)
@@ -54,7 +91,7 @@ class ChatGui(QWidget):
 
     def load_hidden_label(self):
         hlabel = myLabel(self)
-        hlabel.setText("             --对象")
+        hlabel.setText("群聊" if self.users == tuple else self.users[0].get_name())
         hlabel.setFixedWidth(472)
         hlabel.setFixedHeight(30)
         hlabel.move(0, 0)
@@ -72,28 +109,52 @@ class ChatGui(QWidget):
         sendbtn.setFont(QFont("Microsoft YaHei", 28))
         sendbtn.clicked.connect(self.doSend)
 
-    def doSend(self):#处理发送消息函数
-        msg = self.chatLabel.toPlainText()#获取内容
-        self.chatLabel.setText("")
-        self.sock.writeData(msg.encode())
-        if self.sock.state != QAbstractSocket.ConnectedState:
-            msg = "[无连接]"+msg
-        #判断消息发送成功，如果失败，在前面加上红字：[发送失败]
+    def doSend(self):  # 处理发送消息函数
+        msg = self.chatLabel.toPlainText()  # 获取内容
         self.addTextInEdit(msg)
+        self.chatLabel.setText("")
+        # 打包消息 发送给服务器
+        msg = self.msg_handler(msg)
+        self.sock.writeData(msg.encode())
+        if self.sock.state() != 3:
+            msg = "[无连接]"+msg
+
+
+
+    def msg_handler(self, msg):
+        user_str = self.get_user_str()
+        main_str = REQUEST_HEADS["SEND_MSG_HEAD"] + SEPARATE + MSG_START +\
+                   msg + MSG_END + SEPARATE + self.selfid + SEPARATE + user_str + SEPARATE + self.md5
+        return main_str
+
+    def get_user_str(self):
+        if self.type == "mul":
+            ustr = ""
+            for user in self.users:
+                ustr += user.get_id() + USER_SEPARATE
+        else:
+            ustr = self.users[0].get_id()
+        return ustr
 
     def ready_read(self):
         newmsg = self.sock.read(1024).decode()
         username = self.analysis(newmsg)
+        if newmsg.startswith(FAILED_HEADS["NOT_ONLINE_ERROR"]):
+            self.addTextInEdit("对方未登录")
+            return
+        if newmsg.startswith(FAILED_HEADS["SEND_MESSAGE_FAILED"]):
+            self.addTextInEdit("未知原因导致了发送失败")
+            return
         print(newmsg)
         self.addTextInEdit(username+"\r\n"+newmsg)
 
-    def analysis(self,msg):
+    def analysis(self, msg):
         if type(self.users) != tuple:
             return self.users.get_name()
         else:
             return "abc"
 
-    def addTextInEdit(self,msg):
+    def addTextInEdit(self, msg):
         self.ChatLabel.insertPlainText(msg+"\r\n")
 
     def loadchatLabel(self):
@@ -103,9 +164,13 @@ class ChatGui(QWidget):
         self.ChatLabel.setFont(QFont("Microsoft YaHei",10))
         self.ChatLabel.setStyleSheet("color:#FF1493")
         self.ChatLabel.setAlignment(Qt.AlignRight)
-        self.ChatLabel.resize(340,220)
-        self.ChatLabel.move(20,110)
+        self.ChatLabel.resize(340, 220)
+        self.ChatLabel.move(20, 110)
+        if self.msg:
+            self.ChatLabel.insertPlainText(self.msg)
         self.ChatLabel.textChanged.connect(self.loadscrollbar)
+
+
 
     def loadscrollbar(self):
         self.scr = QScrollBar(self)
