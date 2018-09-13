@@ -49,7 +49,8 @@ def msg_devide(data):  # 将发送信息解包
         data = data.split(SEPARATE)
         oid = data[1]
         sid = data[2]
-        dic = {"oid": oid, "sid": sid, "msg": msg}
+        md5 = data[3]
+        dic = {"oid": oid, "sid": sid, "msg": msg,"md5":md5}
         return dic
 
     except Exception as e:

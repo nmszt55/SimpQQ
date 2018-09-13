@@ -25,7 +25,7 @@ class MyFrame(QMainWindow):
         self.sock.connected.connect(self.SendRequest)
         self.sock.readyRead.connect(self.Readytoread)
         self.setWindowIcon(QIcon(DEFAULT_ICON))
-
+        self.chatdic = {}
         self.user = user
         self.Key = MD5
 
@@ -65,7 +65,7 @@ class MyFrame(QMainWindow):
 
     def correct_port(self):
         print("调整端口")
-        str1 = REQUEST_HEADS["CORRECT_ADDR_HEAD"] + SEPARATE + self.Key
+        str1 = REQUEST_HEADS["CORRECT_ADDR_HEAD"] + SEPARATE + self.user.get_id() + SEPARATE + self.Key
         self.sock.writeData(str1.encode())
 
     def Readytoread(self):
@@ -75,11 +75,11 @@ class MyFrame(QMainWindow):
             return
         try:
             datalist = data.split(SEPARATE)
-            if datalist[0] == RECEIVE_MSG_HEAD["NEW_MSG_HEAD"]:
-                self.analyse_msg(data)
             if not self.md5_analyse(datalist[-1]):
                 print("无MD5,不执行:", datalist[-1])
                 return
+            if datalist[0] == RECEIVE_MSG_HEAD["NEW_MSG_HEAD"]:
+                self.analyse_msg(data)
             if datalist[0] not in RESPONSE_HEADS.values() and datalist[0] not in FAILED_HEADS.values():
                 print("无效解析", datalist[0])
                 return
@@ -108,11 +108,11 @@ class MyFrame(QMainWindow):
 
         if datalist[0] == FAILED_HEADS["CORRECT_PORT_FAILED"]:
             print("矫正端口失败,可能无法接收消息")
+
         if datalist[0] == RESPONSE_HEADS["CORRECT_PORT_SUCCESS"]:
             print("端口矫正成功")
 
         if datalist[0] == RESPONSE_HEADS["GET_USR_SUCCESS"]:
-            print("这里执行到了")
             userdata = datalist[1]
             user = addfriendunpick(userdata)
             if not user:
@@ -143,11 +143,18 @@ class MyFrame(QMainWindow):
         if not datadic:
             print("因为未能识别包,一个信息被关闭了")
             return
+        if datadic["md5"] != self.Key:
+            print("一个不正确的md5发送过来")
+            return
         if datadic["sid"] != self.user.get_id():
             print("一个非关联包被丢弃了")
+            return
         for f in self.friends:
             if datadic["oid"] == f.get_id():
-                self.openNewChat(f, datadic["msg"])
+                if datadic["oid"] not in self.chatdic:
+                    self.openNewChat(f, datadic["msg"])
+                else:
+                    self.chatdic[f.get_id()].addTextInEdit(datadic["msg"])
 
     def showOnlineMessage(self,str):
         # x = OnlineMsg(username)
@@ -285,7 +292,7 @@ class MyFrame(QMainWindow):
         self.correct_port()
 
     def openNewChat(self, user, msg=None):
-        ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg)
+        self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg)
 
 
 
