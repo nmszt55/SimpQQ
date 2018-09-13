@@ -48,9 +48,10 @@ class AddFriend(QWidget):
         self.idlabel.setStyleSheet(testBorder)
 
     def addfriend(self):
-        opid = self.idlabel.text()
+        opid = self.lineText.text()
+
         data = REQUEST_HEADS["ADD_FRIEND_HEAD"] + SEPARATE + opid + SEPARATE + self.uid + SEPARATE + self.md5
-        self.sock.writeData(data)
+        self.sock.writeData(data.encode())
 
     def closelabel(self):
         self.nullLabel.show()

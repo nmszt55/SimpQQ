@@ -26,7 +26,7 @@ class Mypyqt1(QWidget):
         self.initUI()
 
     def try_to_connect(self):
-        self.sock.connectToHost(SER_HOST, SER_PORT)
+        self.sock.connectToHost(SER_HOST, SER_PORT, )
 
     def hand_msg(self):
         response = self.sock.read(1024).decode()
@@ -136,7 +136,7 @@ class Mypyqt1(QWidget):
         self.Iconing.move(0,0)
 
         self.setWindowTitle("SimpQQ")
-        self.setWindowIcon(QIcon("../image/WidgetIcon.png"))
+        self.setWindowIcon(QIcon(DEFAULT_ICON))
 
         self.show()
 

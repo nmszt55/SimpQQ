@@ -25,6 +25,7 @@ class ChatGui(QWidget):
         self.selfid = selfid
         self.md5 = md5
         self.sock = QTcpSocket()
+        self.establish_connect()
         self.sock.readyRead.connect(self.ready_read)
         self.sock.connectToHost(SER_HOST, SER_PORT)
 
@@ -45,6 +46,12 @@ class ChatGui(QWidget):
         self.loadInf()
 
         self.show()
+
+    def establish_connect(self):
+        if self.type == "sin":
+            sstr = REQUEST_HEADS["BUILD_ESTABLISH_HEAD"] + SEPARATE + self.selfid + SEPARATE + self.users[0].get_id()\
+                    + self.md5
+            self.sock.writeData(sstr.encode())
 
     def loadInf(self):
         self.inf_label = QLabel(self)
@@ -145,6 +152,13 @@ class ChatGui(QWidget):
         if newmsg.startswith(FAILED_HEADS["SEND_MESSAGE_FAILED"]):
             self.addTextInEdit("未知原因导致了发送失败")
             return
+        if newmsg.startswith(FAILED_HEADS["BULID_ESTABLISH_FAILED"]):
+            self.addTextInEdit("建立连接失败")
+            return
+        if newmsg.startswith(RESPONSE_HEADS["BULID_ESTABLISH_SUCCESS"]):
+            print("建立聊天地址成功")
+            return
+
         print(newmsg)
         self.addTextInEdit(username+"\r\n"+newmsg)
 

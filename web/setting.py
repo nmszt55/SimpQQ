@@ -1,9 +1,11 @@
 # 地址
-SER_HOST = '127.0.0.1'
-SER_PORT = 8000
+SER_HOST = '176.234.83.81'
+SER_PORT = 7878
 
 # 接收数据大小
 MAX_DATA = 2048
+# 默认图标
+DEFAULT_ICON = "../image/WidgetIcon.png"
 
 # 定义分隔符
 SEPARATE = ","
@@ -29,7 +31,8 @@ REQUEST_HEADS = {
     "REGISTER_HEAD": "<register>",
     "DISCONNECT_HEAD": "<quit>",
     "SEND_MSG_HEAD": "<sendmsg>",  # 格式:<..>
-    "CORRECT_ADDR_HEAD": "<correctaddr>"
+    "CORRECT_ADDR_HEAD": "<correctaddr>",
+    "BUILD_ESTABLISH_HEAD": "<chatwidgetsock>"
 }
 
 FAILED_HEADS = {
@@ -44,7 +47,8 @@ FAILED_HEADS = {
     "FRIEND_ALREADY_EXISTS": "<friendalreadyexists>",
     "SEND_MESSAGE_FAILED": "<sendmsgfailed>",
     "CORRECT_PORT_FAILED": "<changeportfailed>",
-    "NOT_ONLINE_ERROR": "<friendnotonline>"
+    "NOT_ONLINE_ERROR": "<friendnotonline>",
+    "BULID_ESTABLISH_FAILED": "<failedtobulidconnection>"
 }
 
 RESPONSE_HEADS = {
@@ -54,7 +58,8 @@ RESPONSE_HEADS = {
     "REGISTER_SUCCESS": '<registersuccess>',
     "LOGIN_SUCCESS": "<loginsuccess>",
     "ADD_FRIEND_SUCCESS": "<addfriendsuccess>",
-    "CORRECT_PORT_SUCCESS": "<correctportsuccess>"
+    "CORRECT_PORT_SUCCESS": "<correctportsuccess>",
+    "BULID_ESTABLISH_SUCCESS": "<connectionestablished>"
 }
 
 RECEIVE_MSG_HEAD = {

@@ -24,6 +24,7 @@ class MyFrame(QMainWindow):
         self.sock.connectToHost(SER_HOST, SER_PORT)
         self.sock.connected.connect(self.SendRequest)
         self.sock.readyRead.connect(self.Readytoread)
+        self.setWindowIcon(QIcon(DEFAULT_ICON))
 
         self.user = user
         self.Key = MD5
@@ -39,7 +40,7 @@ class MyFrame(QMainWindow):
         self.x, self.y = 13, 10
 
     def __initUI(self):
-        self.showOnlineMessage("自己")
+        self.showOnlineMessage(self.user.get_name()+"上线啦")
         self.loadBackground()
         self.loadExitLabel()
         self.loadHideLabel()
@@ -132,6 +133,11 @@ class MyFrame(QMainWindow):
             self.addfriend.closelabel()
             self.addfriend.nullLabel.setText("你们已经是好友啦")
 
+        if datalist[0] == RESPONSE_HEADS["ADD_FRIEND_SUCCESS"]:
+            self.showOnlineMessage("添加好友成功")
+            self.friends.append()
+
+
     def analyse_msg(self, data):
         datadic = msg_devide(data)
         if not datadic:
@@ -143,13 +149,13 @@ class MyFrame(QMainWindow):
             if datadic["oid"] == f.get_id():
                 self.openNewChat(f, datadic["msg"])
 
-    def showOnlineMessage(self,username):
+    def showOnlineMessage(self,str):
         # x = OnlineMsg(username)
         self.xlabel = QLabel()
         self.xlabel.setStyleSheet("font-size:25px;padding:10px;")
         self.xlabel.resize(150, 80)
         self.xlabel.setWindowFlags(Qt.FramelessWindowHint)
-        self.xlabel.setText(username + "上线啦")
+        self.xlabel.setText(str)
 
         pos = QDesktopWidget().availableGeometry().bottomRight()
         x = self.frameGeometry()
