@@ -41,16 +41,16 @@ def addfriendunpick(user_str):
         print("解包出现问题",e)
 
 
-def msg_devide(data):  # 将发送信息解包
+def msg_devide(data):  # 将发送信息解包 格式:头+地址字符串+发送方id+接收方id+MD5 //msg已经被提取
     try:
-        msg = re.findall(MSG_START+r"(.*)"+MSG_END, data)
+        msg = re.findall(MSG_START + r"(.*\n?(.*)?)" + MSG_END, data)
         data = data.replace(MSG_START+msg[0]+MSG_END+SEPARATE, "")
 
         data = data.split(SEPARATE)
-        oid = data[1]
-        sid = data[2]
-        md5 = data[3]
-        dic = {"oid": oid, "sid": sid, "msg": msg,"md5":md5}
+        oid = data[2]
+        sid = data[3]
+        md5 = data[-1]
+        dic = {"oid": oid, "sid": sid, "msg": msg, "md5": md5}
         return dic
 
     except Exception as e:

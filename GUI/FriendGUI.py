@@ -80,6 +80,7 @@ class MyFrame(QMainWindow):
                 return
             if datalist[0] == RECEIVE_MSG_HEAD["NEW_MSG_HEAD"]:
                 self.analyse_msg(data)
+                return
             if datalist[0] not in RESPONSE_HEADS.values() and datalist[0] not in FAILED_HEADS.values():
                 print("无效解析", datalist[0])
                 return
@@ -136,7 +137,6 @@ class MyFrame(QMainWindow):
         if datalist[0] == RESPONSE_HEADS["ADD_FRIEND_SUCCESS"]:
             self.showOnlineMessage("添加好友成功")
             self.friends.append()
-
 
     def analyse_msg(self, data):
         datadic = msg_devide(data)

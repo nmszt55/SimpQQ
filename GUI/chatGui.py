@@ -48,9 +48,10 @@ class ChatGui(QWidget):
         self.show()
 
     def establish_connect(self):
+        self.sock.connectToHost(SER_HOST, SER_PORT)
         if self.type == "sin":
             sstr = REQUEST_HEADS["BUILD_ESTABLISH_HEAD"] + SEPARATE + self.selfid + SEPARATE + self.users[0].get_id()\
-                    + self.md5
+                    + SEPARATE + self.md5
             self.sock.writeData(sstr.encode())
 
     def loadInf(self):
@@ -145,7 +146,7 @@ class ChatGui(QWidget):
 
     def ready_read(self):
         newmsg = self.sock.read(1024).decode()
-        username = self.analysis(newmsg)
+
         if newmsg.startswith(FAILED_HEADS["NOT_ONLINE_ERROR"]):
             self.addTextInEdit("对方未登录")
             return
@@ -158,9 +159,6 @@ class ChatGui(QWidget):
         if newmsg.startswith(RESPONSE_HEADS["BULID_ESTABLISH_SUCCESS"]):
             print("建立聊天地址成功")
             return
-
-        print(newmsg)
-        self.addTextInEdit(username+"\r\n"+newmsg)
 
     def analysis(self, msg):
         if type(self.users) != tuple:
