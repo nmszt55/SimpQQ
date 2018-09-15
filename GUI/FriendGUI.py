@@ -294,7 +294,10 @@ class MyFrame(QMainWindow):
         self.correct_port()
 
     def openNewChat(self, user, msg=None):
-        self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg)
+        self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self)
+
+    def on_chat_close(self, uid):
+        self.chatdic.pop(uid, None)
 
 
 

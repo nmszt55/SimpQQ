@@ -13,7 +13,7 @@ from utils.UserMsgUnpick import msg_devide
 
 class ChatGui(QWidget):
 
-    def __init__(self, *args, md5, selfid, msg):
+    def __init__(self, *args, md5, selfid, msg, parent):
         if not args:
             return
 
@@ -21,6 +21,7 @@ class ChatGui(QWidget):
             self.type = "mul"
         else:
             self.type = "sin"
+        self.parent = parent
         self.msg = msg
         self.users = args
         self.selfid = selfid
@@ -96,7 +97,7 @@ class ChatGui(QWidget):
         exitbtn.setIcon(QIcon("../image/exit2.png"))
         exitbtn.adjustSize()
         exitbtn.move(472, -1)
-        exitbtn.clicked.connect(self.close)
+        exitbtn.clicked.connect(self.close  )
 
     def load_hidden_label(self):
         hlabel = myLabel(self)
@@ -166,10 +167,10 @@ class ChatGui(QWidget):
         if not datadic:
             print("因为未能识别包,一个信息被关闭了")
             return
-        if datadic["md5"] != self.Key:
+        if datadic["md5"] != self.md5:
             print("一个不正确的md5发送过来")
             return
-        if datadic["sid"] != self.user.get_id():
+        if datadic["sid"] != self.selfid:
             print("一个非关联包被丢弃了")
             return
         self.addTextInEdit(datadic["msg"])
@@ -229,6 +230,9 @@ class ChatGui(QWidget):
         else:
             self.loadSingle()
 
+    def closeEvent(self):
+        if self.type == "sin":
+            self.parent.on_chat_close(self.users[0])
 
 if __name__ == "__main__":
     appstart = QtWidgets.QApplication(sys.argv)
