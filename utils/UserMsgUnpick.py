@@ -2,6 +2,7 @@ from web.setting import *
 from domain.user import user
 import re
 
+
 def unpick(userstr):
     try:
         ut = userstr.split(USER_SEPARATE)
@@ -9,7 +10,7 @@ def unpick(userstr):
         if not ut[2]:
             ur.set_head(ut[2])
         return ur
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -38,14 +39,13 @@ def addfriendunpick(user_str):
         user_.set_head(u[2])
         return user_
     except Exception as e:
-        print("解包出现问题",e)
+        print("解包出现问题", e)
 
 
 def msg_devide(data):  # 将发送信息解包 格式:头+地址字符串+发送方id+接收方id+MD5 //msg已经被提取
     try:
         msg = re.findall(MSG_START + r"(.*\n?(.*)?)" + MSG_END, data)
-        data = data.replace(MSG_START+msg[0]+MSG_END+SEPARATE, "")
-
+        data = data.replace(MSG_START + msg[0][0] + MSG_END+SEPARATE, "")
         data = data.split(SEPARATE)
         oid = data[2]
         sid = data[3]
@@ -54,8 +54,9 @@ def msg_devide(data):  # 将发送信息解包 格式:头+地址字符串+发送
         return dic
 
     except Exception as e:
-        print("正则匹配失败",e)
+        print("正则匹配失败", e)
         return False
+
 
 # 打包发送信息
 def send_msg_pack(sid,opid,msg):

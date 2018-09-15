@@ -127,8 +127,6 @@ class ChatGui(QWidget):
         if self.sock.state() != 3:
             msg = "[无连接]"+msg
 
-
-
     def msg_handler(self, msg):
         user_str = self.get_user_str()
         main_str = REQUEST_HEADS["SEND_MSG_HEAD"] + SEPARATE + MSG_START +\
@@ -159,6 +157,8 @@ class ChatGui(QWidget):
         if newmsg.startswith(RESPONSE_HEADS["BULID_ESTABLISH_SUCCESS"]):
             print("建立聊天地址成功")
             return
+        if newmsg.startswith(RECEIVE_MSG_HEAD["NEW_MSG_HEAD"]):
+            pass
 
     def analysis(self, msg):
         if type(self.users) != tuple:
@@ -181,8 +181,6 @@ class ChatGui(QWidget):
         if self.msg:
             self.ChatLabel.insertPlainText(self.msg)
         self.ChatLabel.textChanged.connect(self.loadscrollbar)
-
-
 
     def loadscrollbar(self):
         self.scr = QScrollBar(self)
