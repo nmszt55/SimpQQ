@@ -297,7 +297,8 @@ class MyFrame(QMainWindow):
         self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self)
 
     def on_chat_close(self, uid):
-        self.chatdic.pop(uid, None)
+        print("检测状态:", end="")
+        print(self.chatdic.pop(uid, None))
 
 
 

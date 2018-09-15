@@ -230,9 +230,12 @@ class ChatGui(QWidget):
         else:
             self.loadSingle()
 
-    def closeEvent(self):
+    def closeEvent(self, eve):
         if self.type == "sin":
-            self.parent.on_chat_close(self.users[0])
+            main_str = REQUEST_HEADS["DELETE_CHAT_PORT_HEAD"] + SEPARATE + "<chataddr><{}><{}>".format(self.selfid,
+                                                                                      self.users[0].get_id())
+            self.sock.writeData(main_str.encode())
+            self.parent.on_chat_close(self.users[0].get_id())
 
 if __name__ == "__main__":
     appstart = QtWidgets.QApplication(sys.argv)

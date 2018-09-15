@@ -23,6 +23,7 @@ CLIENT_HEADS = {
 }
 
 REQUEST_HEADS = {
+    "DELETE_CHAT_PORT_HEAD": "<deletechataddr>",
     "ADD_FRIEND_HEAD": "<addfriend>",
     "LOGIN_HEAD": "<login>",
     "DELETE_HEAD": "<deletefriend>",
