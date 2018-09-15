@@ -14,6 +14,7 @@ from GUI.DoubleClickedLabel import MyQLabel
 from GUI.AddFriend import AddFriend
 from web.setting import *
 from utils.UserMsgUnpick import friendunpick,msg_devide,addfriendunpick
+from domain.user import user
 import sys
 
 
@@ -28,6 +29,7 @@ class MyFrame(QMainWindow):
         self.chatdic = {}
         self.user = user
         self.Key = MD5
+        self.count = 1
 
         if not hasattr(self, "friends"):
             print("发送好友请求")
@@ -75,6 +77,9 @@ class MyFrame(QMainWindow):
             return
         try:
             datalist = data.split(SEPARATE)
+            if datalist[0] == FAILED_HEADS["ILLEGAL_HEAD"]:
+                print("非法格式,请检查服务器源代码")
+                return
             if not self.md5_analyse(datalist[-1]):
                 print("无MD5,不执行:", datalist[-1])
                 return
@@ -115,11 +120,11 @@ class MyFrame(QMainWindow):
 
         if datalist[0] == RESPONSE_HEADS["GET_USR_SUCCESS"]:
             userdata = datalist[1]
-            user = addfriendunpick(userdata)
-            if not user:
+            added_user = addfriendunpick(userdata)
+            if not added_user:
                 print("代码出错啦")
                 return
-            self.addfriend.friend = user
+            self.addfriend.friend = added_user
             self.addfriend.loadFriend()
 
         if datalist[0] == FAILED_HEADS["NO_USER_HEAD"]:
@@ -134,9 +139,26 @@ class MyFrame(QMainWindow):
             self.addfriend.closelabel()
             self.addfriend.nullLabel.setText("你们已经是好友啦")
 
+        if datalist[0] == FAILED_HEADS["CANNOT_ADD_SELF_ERROR"]:
+            self.addfriend.closelabel()
+            self.addfriend.nullLabel.setText("不能添加自己为好友哦~~")
+
         if datalist[0] == RESPONSE_HEADS["ADD_FRIEND_SUCCESS"]:
+            self.count += 1
             self.showOnlineMessage("添加好友成功")
-            self.friends.append()
+            usr = user(*datalist[1].split(ATTR_SERARATE)[:2])
+            try:
+                usr.set_head(datalist[1].split(ATTR_SERARATE)[2])
+            except:
+                usr.set_head(DEFAULT_HEAD)
+            self.friends.append(usr)
+            self.reload_friends(self.friends)
+
+    def reload_friends(self, fris):
+        self.Friends.close()
+        self.resetFriendlocation()
+        self.loadFriends(fris)
+        self.Friends.show()
 
     def analyse_msg(self, data):
         datadic = msg_devide(data)
@@ -261,14 +283,13 @@ class MyFrame(QMainWindow):
         SearchText.setPlaceholderText("在此输入寻找的用户名")
 
     def loadFriends(self, friends=None):
-
-        Friends = QLabel(self)
-        Friends.resize(200, 500)
-        Friends.move(15, 185)
-        Friends.setStyleSheet(testBorder)
+        self.Friends = QLabel(self)
+        self.Friends.resize(200, 500)
+        self.Friends.move(15, 185)
+        self.Friends.setStyleSheet(testBorder)
         if hasattr(self, "friends"):
             for f in friends:
-                Friend = MyQLabel(Friends)
+                Friend = MyQLabel(self.Friends)
                 Friend.resize(170, 50)
                 Friend.move(self.x, self.y)
                 Friend.set_user(f, self)
@@ -289,12 +310,14 @@ class MyFrame(QMainWindow):
                 fname.move(55, 10)
 
                 self.y += 55
-        QApplication.processEvents()
-        self.loadMain()
-        self.correct_port()
+        if self.count == 1:  # 表示第一次加载
+            QApplication.processEvents()
+            self.loadMain()
+            self.correct_port()
 
     def openNewChat(self, user, msg=None):
-        self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self)
+        self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self
+                                              ,selfname = self.user.get_name())
 
     def on_chat_close(self, uid):
         print("检测状态:", end="")

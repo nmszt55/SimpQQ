@@ -49,7 +49,6 @@ class AddFriend(QWidget):
 
     def addfriend(self):
         opid = self.lineText.text()
-
         data = REQUEST_HEADS["ADD_FRIEND_HEAD"] + SEPARATE + opid + SEPARATE + self.uid + SEPARATE + self.md5
         self.sock.writeData(data.encode())
 

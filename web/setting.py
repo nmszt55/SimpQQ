@@ -49,7 +49,8 @@ FAILED_HEADS = {
     "SEND_MESSAGE_FAILED": "<sendmsgfailed>",
     "CORRECT_PORT_FAILED": "<changeportfailed>",
     "NOT_ONLINE_ERROR": "<friendnotonline>",
-    "BULID_ESTABLISH_FAILED": "<failedtobulidconnection>"
+    "BULID_ESTABLISH_FAILED": "<failedtobulidconnection>",
+    "CANNOT_ADD_SELF_ERROR": "<cannotaddfriendself>",
 }
 
 RESPONSE_HEADS = {

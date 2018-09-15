@@ -5,15 +5,16 @@ from PyQt5.QtCore import QCoreApplication, Qt
 from PyQt5.Qt import QTextEdit, QTextCursor
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket
 
+from utils.UserMsgUnpick import msg_devide
 from web.setting import *
 from GUI.moveLabel import myLabel
 import sys
-from utils.UserMsgUnpick import msg_devide
+import time
 
 
 class ChatGui(QWidget):
 
-    def __init__(self, *args, md5, selfid, msg, parent):
+    def __init__(self, *args, md5, selfid, msg, parent, selfname):
         if not args:
             return
 
@@ -22,6 +23,7 @@ class ChatGui(QWidget):
         else:
             self.type = "sin"
         self.parent = parent
+        self.selfname = selfname
         self.msg = msg
         self.users = args
         self.selfid = selfid
@@ -121,7 +123,7 @@ class ChatGui(QWidget):
 
     def doSend(self):  # 处理发送消息函数
         msg = self.chatLabel.toPlainText()  # 获取内容
-        self.addTextInEdit(msg)
+        self.addTextInEdit(self.selfname,msg)
         self.chatLabel.setText("")
         # 打包消息 发送给服务器
         msg = self.msg_handler(msg)
@@ -173,7 +175,13 @@ class ChatGui(QWidget):
         if datadic["sid"] != self.selfid:
             print("一个非关联包被丢弃了")
             return
-        self.addTextInEdit(datadic["msg"])
+        for x in self.parent.friends:
+            if x.get_id == datadic["sid"]:
+                name = x.get_name()
+        if not name:
+            name = "未知"
+
+        self.addTextInEdit(name, datadic["msg"])
 
     def analysis(self, msg):
         if type(self.users) != tuple:
@@ -181,14 +189,20 @@ class ChatGui(QWidget):
         else:
             return "abc"
 
-    def addTextInEdit(self, msg):
+    def addTextInEdit(self, username, msg):
+        date = list(time.localtime()[:6])
+        timestr = ""
+        for x in date:
+            timestr += str(x)+"."
+        self.ChatLabel.insertPlainText(username+"-"+timestr[:-1]+"\r\n")
         self.ChatLabel.insertPlainText(msg+"\r\n")
 
     def loadchatLabel(self):
         self.ChatLabel = QTextEdit(self)
-        self.ChatLabel.setEnabled(False)
+        # self.ChatLabel.setEnabled(False)
+        self.ChatLabel.setReadOnly(True)
         self.ChatLabel.setFocusPolicy(Qt.NoFocus)
-        self.ChatLabel.setFont(QFont("Microsoft YaHei",10))
+        self.ChatLabel.setFont(QFont("Microsoft YaHei", 10))
         self.ChatLabel.setStyleSheet("color:#FF1493")
         self.ChatLabel.setAlignment(Qt.AlignRight)
         self.ChatLabel.resize(340, 220)
