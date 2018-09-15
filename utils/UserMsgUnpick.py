@@ -62,3 +62,20 @@ def msg_devide(data):  # 将发送信息解包 格式:头+地址字符串+发送
 def send_msg_pack(sid,opid,msg):
     strs = RECEIVE_MSG_HEAD["NEW_MSG_HEAD"] + SEPARATE + sid + SEPARATE + opid + SEPARATE + MSG_START + msg + MSG_END
     return strs.encode()
+
+
+# 解包信息
+def msg_devide(data):  # 将发送信息解包 格式:头+地址字符串+发送方id+接收方id+MD5 //msg已经被提取
+    try:
+        msg = re.findall(MSG_START + r"(.*\n?(.*)?)" + MSG_END, data)[0]
+        data = data.replace(MSG_START + msg[0] + MSG_END+SEPARATE, "")
+        data = data.split(SEPARATE)
+        oid = data[2]
+        sid = data[3]
+        md5 = data[-1]
+        dic = {"oid": oid, "sid": sid, "msg": msg[0], "md5": md5}
+        return dic
+
+    except Exception as e:
+        print("正则匹配失败", e)
+        return False

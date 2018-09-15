@@ -8,6 +8,7 @@ from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket
 from web.setting import *
 from GUI.moveLabel import myLabel
 import sys
+from utils.UserMsgUnpick import msg_devide
 
 
 class ChatGui(QWidget):
@@ -158,7 +159,20 @@ class ChatGui(QWidget):
             print("建立聊天地址成功")
             return
         if newmsg.startswith(RECEIVE_MSG_HEAD["NEW_MSG_HEAD"]):
-            pass
+            self.analyse_msg(newmsg)
+
+    def analyse_msg(self, data):
+        datadic = msg_devide(data)
+        if not datadic:
+            print("因为未能识别包,一个信息被关闭了")
+            return
+        if datadic["md5"] != self.Key:
+            print("一个不正确的md5发送过来")
+            return
+        if datadic["sid"] != self.user.get_id():
+            print("一个非关联包被丢弃了")
+            return
+        self.addTextInEdit(datadic["msg"])
 
     def analysis(self, msg):
         if type(self.users) != tuple:
