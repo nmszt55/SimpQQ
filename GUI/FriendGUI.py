@@ -151,12 +151,14 @@ class MyFrame(QMainWindow):
             return
         for f in self.friends:
             if datadic["oid"] == f.get_id():
-                if datadic["oid"] not in self.chatdic:
+                if f.get_id() not in self.chatdic:
                     self.openNewChat(f, datadic["msg"])
+                    break
                 else:
                     self.chatdic[f.get_id()].addTextInEdit(datadic["msg"])
+                    break
 
-    def showOnlineMessage(self,str):
+    def showOnlineMessage(self, str):
         # x = OnlineMsg(username)
         self.xlabel = QLabel()
         self.xlabel.setStyleSheet("font-size:25px;padding:10px;")
@@ -293,6 +295,7 @@ class MyFrame(QMainWindow):
 
     def openNewChat(self, user, msg=None):
         self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg)
+
 
 
 
