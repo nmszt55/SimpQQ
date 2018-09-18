@@ -21,6 +21,8 @@ DEFAULT_HEAD = '../image/default_user.png'
 CLIENT_HEADS = {
     "ADD_FRIEND_IN_LABEL": "<addfriend>",
 }
+# 记录上次登录用户名的地址
+LAST_LOGIN_ADDR = "../LastLogin.txt"
 
 REQUEST_HEADS = {
     "DELETE_CHAT_PORT_HEAD": "<deletechataddr>",

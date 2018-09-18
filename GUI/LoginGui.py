@@ -31,6 +31,7 @@ class Mypyqt1(QWidget):
     def hand_msg(self):
         response = self.sock.read(1024).decode()
         if response.startswith(RESPONSE_HEADS["LOGIN_SUCCESS"]):
+            self.when_log_success(self.username)
             msg = response.split(SEPARATE)
             MD5 = msg[1]  # id秘钥
             user = unpick(msg[2])  # 用户的信息
@@ -43,8 +44,16 @@ class Mypyqt1(QWidget):
         else:
             self.loginfailed("出现了未知错误")
 
+    def when_log_success(self, username):
+        try:
+            with open(LAST_LOGIN_ADDR, "w") as f:
+                f.write(username)
+        except:
+            print("加载上次登录文件失败")
+
     def login(self):
         username = self.logintext.text()
+        self.username = username
         password = Sha1Translate(self.password.text())
 
         if self.sock.state() != 3:

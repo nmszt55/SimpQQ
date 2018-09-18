@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QScrollBar, QLabel
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor
-from PyQt5.QtCore import QCoreApplication, Qt
+from PyQt5.QtCore import QCoreApplication, Qt, QSize
 from PyQt5.Qt import QTextEdit, QTextCursor
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket
 
@@ -45,6 +45,7 @@ class ChatGui(QWidget):
         self.loadCHUIZHI()
         self.loadFuncBtns()
         self.loadsendmsgText()
+        self.loadfuncbtn()
         self.loadSendBtn()
         # self.loadscrollbar()
         self.loadInf()
@@ -150,13 +151,13 @@ class ChatGui(QWidget):
         newmsg = self.sock.read(1024).decode()
 
         if newmsg.startswith(FAILED_HEADS["NOT_ONLINE_ERROR"]):
-            self.addTextInEdit(username="错误消息",msg="对方未登录")
+            self.addTextInEdit(username="错误消息", msg="对方未登录")
             return
         if newmsg.startswith(FAILED_HEADS["SEND_MESSAGE_FAILED"]):
-            self.addTextInEdit(username="错误消息",msg="未知原因导致了发送失败")
+            self.addTextInEdit(username="错误消息", msg="未知原因导致了发送失败")
             return
         if newmsg.startswith(FAILED_HEADS["BULID_ESTABLISH_FAILED"]):
-            self.addTextInEdit(username="错误消息",msg="建立连接失败")
+            self.addTextInEdit(username="错误消息", msg="建立连接失败")
             return
         if newmsg.startswith(RESPONSE_HEADS["BULID_ESTABLISH_SUCCESS"]):
             print("建立聊天地址成功")
@@ -189,7 +190,6 @@ class ChatGui(QWidget):
         if type == "send":
             self.ChatLabel.setTextColor(QColor(0, 55, 0))
             self.ChatLabel.setAlignment(Qt.AlignRight)
-
         self.ChatLabel.insertPlainText(username+"-"+timestr[:-1]+"\r\n")
         self.ChatLabel.insertPlainText(msg+"\r\n")
 
@@ -202,23 +202,59 @@ class ChatGui(QWidget):
         self.ChatLabel.resize(340, 220)
         self.ChatLabel.move(20, 110)
         if self.msg:
-            self.addTextInEdit(self.users[0].get_name(),self.msg,"recv")
+            self.addTextInEdit(self.users[0].get_name(), self.msg, "recv")
         self.ChatLabel.textChanged.connect(self.loadscrollbar)
 
     def loadscrollbar(self):
         self.scr = QScrollBar(self)
-        self.scr.resize(15,220)
-        self.scr.move(330,110)
+        self.scr.resize(15, 220)
+        self.scr.move(330, 110)
         self.ChatLabel.moveCursor(QTextCursor.End)
 
-    def loadFuncBtns(self):
+    def loadfuncbtn(self):  # 加载清屏按钮和发送图片按钮
+        clearbtn = QPushButton(self)
+        clearbtn.resize(30, 30)
+        clearbtn.move(70, 332)
+        clearbtn.setIcon(QIcon("../image/clear.png"))
+        clearbtn.setIconSize(QSize(25, 25))
+        clearbtn.clicked.connect(self.clear_text)
+        clearbtn.show()
+
+        photobtn = QPushButton(self)
+        photobtn.resize(30, 30)
+        photobtn.move(30, 332)
+        photobtn.setIcon(QIcon("../image/photo.png"))
+        photobtn.setIconSize(QSize(25, 25))
+        photobtn.clicked.connect(self.send_photo_dialog)
+        photobtn.show()
+
+    # 清屏
+    def clear_text(self):
+        self.ChatLabel.clear()
+
+    # 加载图片框体
+    def send_photo_dialog(self):
+        from PyQt5.QtWidgets import QFileDialog
+        f = QFileDialog(self)
+        f.setDefaultSuffix("jpg")
+
+        fname = f.getOpenFileName(self, "send photo", "/home/tarena/")
+
+        print(fname)
+        # if fname[0]:
+        #     with open(fname[0], "r") as f:
+        #         data = f.read()
+
+
+
+    def loadFuncBtns(self):  # 加载顶部按钮
         self.funlist = []
 
-        fun1 = QPushButton("下载",self)
-        fun1.resize(40,40)
+        fun1 = QPushButton("下载", self)
+        fun1.resize(40, 40)
         self.funlist.append(fun1)
 
-        fun2 = QPushButton("邮件",self)
+        fun2 = QPushButton("邮件", self)
         fun2.resize(40, 40)
         self.funlist.append(fun2)
 
