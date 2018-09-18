@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QScrollBar, QLabel
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import QIcon, QFont, QPixmap
+from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor
 from PyQt5.QtCore import QCoreApplication, Qt
 from PyQt5.Qt import QTextEdit, QTextCursor
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket
@@ -123,7 +123,7 @@ class ChatGui(QWidget):
 
     def doSend(self):  # 处理发送消息函数
         msg = self.chatLabel.toPlainText()  # 获取内容
-        self.addTextInEdit(self.selfname,msg)
+        self.addTextInEdit(self.selfname, msg, "send")
         self.chatLabel.setText("")
         # 打包消息 发送给服务器
         msg = self.msg_handler(msg)
@@ -150,13 +150,13 @@ class ChatGui(QWidget):
         newmsg = self.sock.read(1024).decode()
 
         if newmsg.startswith(FAILED_HEADS["NOT_ONLINE_ERROR"]):
-            self.addTextInEdit("对方未登录")
+            self.addTextInEdit(username="错误消息",msg="对方未登录")
             return
         if newmsg.startswith(FAILED_HEADS["SEND_MESSAGE_FAILED"]):
-            self.addTextInEdit("未知原因导致了发送失败")
+            self.addTextInEdit(username="错误消息",msg="未知原因导致了发送失败")
             return
         if newmsg.startswith(FAILED_HEADS["BULID_ESTABLISH_FAILED"]):
-            self.addTextInEdit("建立连接失败")
+            self.addTextInEdit(username="错误消息",msg="建立连接失败")
             return
         if newmsg.startswith(RESPONSE_HEADS["BULID_ESTABLISH_SUCCESS"]):
             print("建立聊天地址成功")
@@ -175,25 +175,21 @@ class ChatGui(QWidget):
         if datadic["sid"] != self.selfid:
             print("一个非关联包被丢弃了")
             return
-        for x in self.parent.friends:
-            if x.get_id == datadic["sid"]:
-                name = x.get_name()
-        if not name:
-            name = "未知"
 
-        self.addTextInEdit(name, datadic["msg"])
+        self.addTextInEdit(self.users[0].get_name(), datadic["msg"], "recv")
 
-    def analysis(self, msg):
-        if type(self.users) != tuple:
-            return self.users.get_name()
-        else:
-            return "abc"
-
-    def addTextInEdit(self, username, msg):
+    def addTextInEdit(self, username, msg, type="recv"):
         date = list(time.localtime()[:6])
         timestr = ""
         for x in date:
             timestr += str(x)+"."
+        if type == "recv":
+            self.ChatLabel.setTextColor(QColor(32, 55, 96))
+            self.ChatLabel.setAlignment(Qt.AlignLeft)
+        if type == "send":
+            self.ChatLabel.setTextColor(QColor(0, 55, 0))
+            self.ChatLabel.setAlignment(Qt.AlignRight)
+
         self.ChatLabel.insertPlainText(username+"-"+timestr[:-1]+"\r\n")
         self.ChatLabel.insertPlainText(msg+"\r\n")
 
@@ -203,12 +199,10 @@ class ChatGui(QWidget):
         self.ChatLabel.setReadOnly(True)
         self.ChatLabel.setFocusPolicy(Qt.NoFocus)
         self.ChatLabel.setFont(QFont("Microsoft YaHei", 10))
-        self.ChatLabel.setStyleSheet("color:#FF1493")
-        self.ChatLabel.setAlignment(Qt.AlignRight)
         self.ChatLabel.resize(340, 220)
         self.ChatLabel.move(20, 110)
         if self.msg:
-            self.ChatLabel.insertPlainText(self.msg)
+            self.addTextInEdit(self.users[0].get_name(),self.msg,"recv")
         self.ChatLabel.textChanged.connect(self.loadscrollbar)
 
     def loadscrollbar(self):
@@ -237,6 +231,7 @@ class ChatGui(QWidget):
         self.chatLabel = QTextEdit(self)
         self.chatLabel.resize(340, 80)
         self.chatLabel.move(20, 365)
+        # self.chatLabel.setAcceptRichText(True)
 
     def loadRight(self):
         if self.type == "mul":
@@ -253,5 +248,5 @@ class ChatGui(QWidget):
 
 if __name__ == "__main__":
     appstart = QtWidgets.QApplication(sys.argv)
-    x = ChatGui()
+    # x = ChatGui( md5 = 123, selfid="123", msg=123, parent=, selfname)
     sys.exit(appstart.exec_())

@@ -317,7 +317,7 @@ class MyFrame(QMainWindow):
 
     def openNewChat(self, user, msg=None):
         self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self
-                                              ,selfname = self.user.get_name())
+                                              , selfname=self.user.get_name())
 
     def on_chat_close(self, uid):
         print("检测状态:", end="")
