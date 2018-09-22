@@ -7,12 +7,16 @@ MAX_DATA = 2048
 # 默认图标
 DEFAULT_ICON = "../image/WidgetIcon.png"
 
+# charset
+CHARSET = "utf-8"
+
 # 定义分隔符
 SEPARATE = ","
 ATTR_SERARATE = "&"
 USER_SEPARATE = "$"
 MSG_START = "&start<<"
 MSG_END = "&end>>"
+END_SEPARATE = "<⊥>"
 
 # 默认样式
 testBorder = "border-width: 2px;border-style: solid;border-color: 	#3D3D3D;"
@@ -67,5 +71,6 @@ RESPONSE_HEADS = {
 }
 
 RECEIVE_MSG_HEAD = {
-    "NEW_MSG_HEAD": "<newmsg>"  # 格式:<..>,fromid,opid,neirong
+    "NEW_MSG_HEAD": "<newmsg>",  # 格式:<..>,fromid,opid,neirong
+    'LEAVE_MSG_HEAD': "<leavingmsg>",  # 格式:<头>,接收地址,格式化消息,发送时间,接收人id,发送人id,MD5
 }

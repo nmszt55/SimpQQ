@@ -13,7 +13,7 @@ from GUI.chatGui import ChatGui
 from GUI.DoubleClickedLabel import MyQLabel
 from GUI.AddFriend import AddFriend
 from web.setting import *
-from utils.UserMsgUnpick import friendunpick,msg_devide,addfriendunpick
+from utils.UserMsgUnpick import friendunpick,msg_devide,addfriendunpick,leaving_msg_unpuck,is_zhanbao,zhanbao_devide
 from domain.user import user
 import sys
 
@@ -70,9 +70,22 @@ class MyFrame(QMainWindow):
         str1 = REQUEST_HEADS["CORRECT_ADDR_HEAD"] + SEPARATE + self.user.get_id() + SEPARATE + self.Key
         self.sock.writeData(str1.encode())
 
-    def Readytoread(self):
-        data = self.sock.read(MAX_DATA).decode()
-        print(data)
+    def Readytoread(self, adata=None):
+        if not adata:
+            data = self.sock.read(MAX_DATA).decode()
+            if is_zhanbao(data):
+                commands = zhanbao_devide(data)
+                print(commands)
+                for x in commands:
+                    if not x:
+                        continue
+                    self.Readytoread(adata=x)
+                return
+            else:
+                pass
+        else:
+            data = adata
+
         if not data or data == "":
             return
         try:
@@ -86,6 +99,9 @@ class MyFrame(QMainWindow):
             if datalist[0] == RECEIVE_MSG_HEAD["NEW_MSG_HEAD"]:
                 self.analyse_msg(data)
                 return
+            if datalist[0] == RECEIVE_MSG_HEAD['LEAVE_MSG_HEAD']:
+                self.analyse_leaving_msg(data)
+                return
             if datalist[0] not in RESPONSE_HEADS.values() and datalist[0] not in FAILED_HEADS.values():
                 print("无效解析", datalist[0])
                 return
@@ -95,10 +111,31 @@ class MyFrame(QMainWindow):
             return
 
     def md5_analyse(self, psw):
+        if psw.endswith(END_SEPARATE):
+            psw = psw.replace(END_SEPARATE, "")
         if self.Key != psw:
             return False
         else:
             return True
+
+    def analyse_leaving_msg(self, data):
+        msgdic = leaving_msg_unpuck(data)
+        if not msgdic:
+            print("分析无结果")
+            return
+        if msgdic["sid"] != self.user.get_id():
+            print("分析结果不正却", msgdic["sid"])
+            return
+        if msgdic["md5"] != self.Key:
+            print("一个不正确的md5发送过来")
+            return
+        for f in self.friends:
+            if msgdic["fromid"] == f.get_id():
+                if f.get_id() not in self.chatdic:
+                    self.openNewChat(f, msgdic["msg"], datetime=msgdic["sendtime"])
+                    break
+                else:
+                    self.chatdic[f.get_id()].show_leaving_msg(msgdic["msg"], msgdic["sendtime"], f.get_name())
 
     def analyse_data(self, datalist):
         # 获取朋友的格式 <...>,friend_data
@@ -165,7 +202,7 @@ class MyFrame(QMainWindow):
         if not datadic:
             print("因为未能识别包,一个信息被关闭了")
             return
-        if datadic["md5"] != self.Key:
+        if datadic["md5"] != self.Key+END_SEPARATE and datadic["md5"] != self.Key:
             print("一个不正确的md5发送过来")
             return
         if datadic["sid"] != self.user.get_id():
@@ -315,9 +352,15 @@ class MyFrame(QMainWindow):
             self.loadMain()
             self.correct_port()
 
-    def openNewChat(self, user, msg=None):
-        self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self
-                                              , selfname=self.user.get_name())
+    def openNewChat(self, user, msg=None, datetime=None):
+        if not datetime:
+            self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self
+                                                  , selfname=self.user.get_name())
+        else:
+            print("开始执行打开窗口")
+            self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=None, parent=self
+                                                  , selfname=self.user.get_name())
+            self.chatdic[user.get_id()].show_leaving_msg(msg, datetime, user.get_name())
 
     def on_chat_close(self, uid):
         print("检测状态:", end="")

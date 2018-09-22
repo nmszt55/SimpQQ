@@ -79,3 +79,63 @@ def msg_devide(data):  # 将发送信息解包 格式:头+地址字符串+发送
     except Exception as e:
         print("正则匹配失败", e)
         return False
+
+
+# 将服务器发送过来的留言信息解包,制作成字典形式返回
+def leaving_msg_unpuck(data):
+        msg = re.findall(MSG_START + r"(.*\n?(.*)?)" + MSG_END, data)[0][0]
+        data = data.replace(MSG_START + msg + MSG_END + SEPARATE, "")
+
+        datalist = data.split(SEPARATE)
+        sendtime = datalist[2]
+        sid = datalist[3]
+        fromid = datalist[4]
+        md5 = datalist[5]
+
+        dic = {
+            "msg": msg,
+            "sid": sid,
+            'fromid': fromid,
+            "md5": md5,
+            "sendtime": sendtime
+        }
+        return dic
+
+
+# 判断是否粘包
+def is_zhanbao(data):
+    pd = 0
+    for x in RESPONSE_HEADS.values():
+        if x in data:
+            pd += data.count(x)
+    for x in RECEIVE_MSG_HEAD.values():
+        if x in data:
+            pd += data.count(x)
+    for x in REQUEST_HEADS.values():
+        if x in data:
+            pd += data.count(x)
+    for x in FAILED_HEADS.values():
+        if x in data:
+            pd += data.count(x)
+    if pd > 1:
+        print(pd)
+        return True
+    elif pd == 1:
+        return False
+    else:
+        print("分析粘包的时候出现了非法消息", pd)
+
+
+def zhanbao_devide(data):
+    li = re.split(END_SEPARATE, data)
+    return li
+
+
+
+
+if __name__ == "__main__":
+    str = """
+    <leavingmsg>,176.234.83.81:40130,&start<<sadsdadsadsa&end>>,2018-09-22 21:00:24,2,12,da4b9237bacccdf19c0760cab7aec4a8359010b0<leavingmsg>,176.234.83.81:40130,&start<<dsasdadsadsaf&end>>,2018-09-22 21:00:39,2,12,da4b9237bacccdf19c0760cab7aec4a8359010b0<leavingmsg>,176.234.83.81:40130,&start<<dsdsasdasdadsasda&end>>,2018-09-22 21:00:25,2,12,da4b9237bacccdf19c0760cab7aec4a8359010b0<leavingmsg>,176.234.83.81:40130,&start<<dsadsdsadsasdasda&end>>,2018-09-22 21:00:42,2,12,da4b9237bacccdf19c0760cab7aec4a8359010b0
+    """
+    for x in zhanbao_devide(str):
+        print(x)

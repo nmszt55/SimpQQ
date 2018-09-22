@@ -28,6 +28,8 @@ class ChatGui(QWidget):
         self.users = args
         self.selfid = selfid
         self.md5 = md5
+        self.count_leav_msg = 0
+        self.first = True
         self.sock = QTcpSocket()
         self.establish_connect()
         self.sock.readyRead.connect(self.ready_read)
@@ -124,7 +126,9 @@ class ChatGui(QWidget):
 
     def doSend(self):  # 处理发送消息函数
         msg = self.chatLabel.toPlainText()  # 获取内容
-        self.addTextInEdit(self.selfname, msg, "send")
+        self.addTextInEdit(username=self.selfname, msg=msg, type="send")
+        if self.first:
+            self.first = False
         self.chatLabel.setText("")
         # 打包消息 发送给服务器
         msg = self.msg_handler(msg)
@@ -179,19 +183,31 @@ class ChatGui(QWidget):
 
         self.addTextInEdit(self.users[0].get_name(), datadic["msg"], "recv")
 
-    def addTextInEdit(self, username, msg, type="recv"):
-        date = list(time.localtime()[:6])
-        timestr = ""
-        for x in date:
-            timestr += str(x)+"."
-        if type == "recv":
+    def addTextInEdit(self, username, msg, type="recv", sendtime=None):
+        if not sendtime:  # 处理时时发送过来的消息
+            date = list(time.localtime()[:6])
+            timestr = ""
+            for x in date:
+                timestr += str(x)+"."
+            if type == "recv":
+                self.ChatLabel.setTextColor(QColor(32, 55, 96))
+                self.ChatLabel.setAlignment(Qt.AlignLeft)
+            if type == "send":
+                self.ChatLabel.setTextColor(QColor(0, 55, 0))
+                self.ChatLabel.setAlignment(Qt.AlignRight)
+                if self.first == True:
+                    # for x in range(self.count_leav_msg):
+                    self.ChatLabel.insertPlainText("\r\n")
+
+            self.ChatLabel.insertPlainText(username+"-"+timestr[:-1]+"\r\n")
+            self.ChatLabel.insertPlainText(msg+"\r\n")
+        else:  # 处理别人的留言
+
             self.ChatLabel.setTextColor(QColor(32, 55, 96))
             self.ChatLabel.setAlignment(Qt.AlignLeft)
-        if type == "send":
-            self.ChatLabel.setTextColor(QColor(0, 55, 0))
-            self.ChatLabel.setAlignment(Qt.AlignRight)
-        self.ChatLabel.insertPlainText(username+"-"+timestr[:-1]+"\r\n")
-        self.ChatLabel.insertPlainText(msg+"\r\n")
+            self.ChatLabel.insertPlainText(username + "-" + sendtime + "\r\n")
+            self.ChatLabel.insertPlainText(msg + "\r\n")
+
 
     def loadchatLabel(self):
         self.ChatLabel = QTextEdit(self)
@@ -204,6 +220,10 @@ class ChatGui(QWidget):
         if self.msg:
             self.addTextInEdit(self.users[0].get_name(), self.msg, "recv")
         self.ChatLabel.textChanged.connect(self.loadscrollbar)
+
+    def show_leaving_msg(self, msg, sendtime, username):
+        self.count_leav_msg += 1
+        self.addTextInEdit(username, msg, type="recv", sendtime=sendtime)
 
     def loadscrollbar(self):
         self.scr = QScrollBar(self)
@@ -244,8 +264,6 @@ class ChatGui(QWidget):
         # if fname[0]:
         #     with open(fname[0], "r") as f:
         #         data = f.read()
-
-
 
     def loadFuncBtns(self):  # 加载顶部按钮
         self.funlist = []
