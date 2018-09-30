@@ -1,28 +1,24 @@
-def he():
-    a = input("输入正数")
-    b = input("输入负数")
-    a = int(a)
-    b = int(b)
-    if b > 0:
-        b *= -1
-    max_len = 17  # 总长度
-    sumx = []  # 容器
-    if abs(a) > abs(b):  # 计算出正/负值需要的次数为负/正值的几倍
-        beishu = abs(a//b)
-        da = a
-        xiao = b
-    else:
-        beishu = abs(b//a)
-        da = b
-        xiao = a
+from socket import *
+from web.setting import *
 
-    # sep = 17//beishu  # 计算出一个数组中最多能出现多少个负数
-    for i in range(max_len):
-        if (i+1)%beishu == 0 and i != 0:
-            sumx += [da]  # 添加绝对值大的
-        else:
-            sumx += [xiao]  # 添加绝对值小的
-    print(sumx)
-    print(sum(sumx))
+def connect():
+    import time
+    time.sleep(3)
+    stri = OTHER_HEAD["FILE_INF_HEAD"] + FILE_SEPARATE + "addr" + FILE_SEPARATE + "sendtest.jpg" + FILE_SEPARATE + \
+           "sendid" + FILE_SEPARATE + "asdasddsaxzc11321bvc6132b1v32m132468t74h86" + END_SEPARATE
+    file = "/home/tarena/下载/abc.jpg"
 
-he()
+    with open(file, "rb") as f:
+        print('开始传输文件')
+        sock = socket()
+        sock.connect(("localhost", 7895))
+        sock.send(stri.encode())
+        time.sleep(2)
+        while True:
+            data = f.read(1024)
+            if not data:
+                print("传输完成")
+                sock.close()
+                return
+            sock.send(data)
+connect()

@@ -8,6 +8,7 @@ from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket
 from utils.UserMsgUnpick import msg_devide
 from web.setting import *
 from GUI.moveLabel import myLabel
+from web.filesocket import Filesocket
 import sys
 import time
 
@@ -202,12 +203,10 @@ class ChatGui(QWidget):
             self.ChatLabel.insertPlainText(username+"-"+timestr[:-1]+"\r\n")
             self.ChatLabel.insertPlainText(msg+"\r\n")
         else:  # 处理别人的留言
-
             self.ChatLabel.setTextColor(QColor(32, 55, 96))
             self.ChatLabel.setAlignment(Qt.AlignLeft)
             self.ChatLabel.insertPlainText(username + "-" + sendtime + "\r\n")
             self.ChatLabel.insertPlainText(msg + "\r\n")
-
 
     def loadchatLabel(self):
         self.ChatLabel = QTextEdit(self)
@@ -256,14 +255,31 @@ class ChatGui(QWidget):
     def send_photo_dialog(self):
         from PyQt5.QtWidgets import QFileDialog
         f = QFileDialog(self)
-        f.setDefaultSuffix("jpg")
 
-        fname = f.getOpenFileName(self, "send photo", "/home/tarena/")
+        fname = f.getOpenFileName(self, "send photo", "/home/tarena/", filter="Image File(*.jpg *.png)")
+        # print(fname[0].split("/")[-1])
+        if fname[0]:
+            try:
+                print("开始发送....")
+                sender = Filesocket(self.selfid, self.users[0].get_id(), fname[0].split("/")[-1], MAX_FILESEND, self.md5)
+                sender.start()
+                with open(fname[0], "rb") as f:
+                    while True:
+                        data = f.read(1024)
+                        if not data:
+                            break
+                        sender.send_file(data)
+                    sender.close()
+                    self.load_system_msg_in_charlabel("发送成功")
+                    return True
+            except IOError as e:
+                print("加载文件出现错误,发送失败",e)
+                return False
 
-        print(fname)
-        # if fname[0]:
-        #     with open(fname[0], "r") as f:
-        #         data = f.read()
+    def load_system_msg_in_charlabel(self, msg):
+        self.ChatLabel.setTextColor(QColor(255, 0, 0))
+        self.ChatLabel.setAlignment(Qt.AlignRight)
+        self.ChatLabel.insertPlainText(msg+"\r\n")
 
     def loadFuncBtns(self):  # 加载顶部按钮
         self.funlist = []
@@ -302,5 +318,4 @@ class ChatGui(QWidget):
 
 if __name__ == "__main__":
     appstart = QtWidgets.QApplication(sys.argv)
-    # x = ChatGui( md5 = 123, selfid="123", msg=123, parent=, selfname)
     sys.exit(appstart.exec_())
