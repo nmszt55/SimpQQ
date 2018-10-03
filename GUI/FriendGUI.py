@@ -27,6 +27,7 @@ class MyFrame(QMainWindow):
         self.sock.readyRead.connect(self.Readytoread)
         self.setWindowIcon(QIcon(DEFAULT_ICON))
         self.chatdic = {}
+        self.friends_online = {}  # 用来存储用户的显示上线的label
         self.user = user
         self.Key = MD5
         self.count = 1
@@ -37,25 +38,28 @@ class MyFrame(QMainWindow):
 
         self.addfriend = AddFriend()
         self.__initUI()
+        self.show()
 
     def resetFriendlocation(self):
         self.x, self.y = 13, 10
 
     def __initUI(self):
-        self.showOnlineMessage(self.user.get_name()+"上线啦")
+        self.friends_init()
+        self.onlinemsg_init()
+        # self.showOnlineMessage(self.user.get_name()+"上线啦")
         self.loadBackground()
         self.loadExitLabel()
         self.loadHideLabel()
         self.loadHideBtn()
         self.resetFriendlocation()
-          # 判断好友数大于10出现滚动条
+        # 判断好友数大于10出现滚动条
         self.loadMenu()  # 添加好友功能，加入群功能，创建群
         self.loadSearch()  # 搜索好友的框
-
         if self.user.get_head() == None:
             self.loadSelf(Myname=self.user.get_name())  # 显示个人信息在顶上
         else:
             self.loadSelf(Img=self.user.get_head(), Myname=self.user.get_name())
+
 
     def SendRequest(self):
         self.hlabel.setText("Connecting...")
@@ -73,7 +77,8 @@ class MyFrame(QMainWindow):
     def Readytoread(self, adata=None):
         if not adata:
             data = self.sock.read(MAX_DATA).decode()
-            if is_zhanbao(data):
+            print(data)
+            if is_zhanbao(data):  #出现粘包进行分离
                 commands = zhanbao_devide(data)
                 print(commands)
                 for x in commands:
@@ -140,8 +145,10 @@ class MyFrame(QMainWindow):
     def analyse_data(self, datalist):
         # 获取朋友的格式 <...>,friend_data
         if datalist[0] == RESPONSE_HEADS["GET_FRIENDS_SUCCESS"]:
-            self.friends = friendunpick(datalist[1])
+            self.friends, onlinelist = friendunpick(datalist[1])
             self.loadFriends(self.friends)
+            # self.reload_friends(self.friends)
+            self.update_online(onlinelist)
 
         if datalist[0] == RESPONSE_HEADS["DELETE_FRIEND_SUCCESS"]:
             pass
@@ -191,6 +198,22 @@ class MyFrame(QMainWindow):
             self.friends.append(usr)
             self.reload_friends(self.friends)
 
+        if datalist[0] == REQUEST_HEADS["ONLINE_HEAD"]:
+            uid = datalist[1]
+            if uid in self.friends_online:
+                if hasattr(self, "friends"):
+                    for x in self.friends:
+                        if x.get_id() == uid:
+                            self.showOnlineMessage(x.get_name() + "Is Online")
+                            self.friends_online[uid].setText("Online")
+
+    def update_online(self, online):
+        for x in online:
+            if x[1]:
+                self.friends_online[x[0]].setText("上线")
+            else:
+                self.friends_online[x[0]].setText("下线")
+
     def reload_friends(self, fris):
         self.Friends.close()
         self.resetFriendlocation()
@@ -217,14 +240,17 @@ class MyFrame(QMainWindow):
                     self.chatdic[f.get_id()].addTextInEdit(datadic["msg"])
                     break
 
-    def showOnlineMessage(self, str):
-        # x = OnlineMsg(username)
+    def onlinemsg_init(self):
         self.xlabel = QLabel()
         self.xlabel.setStyleSheet("font-size:25px;padding:10px;")
         self.xlabel.resize(150, 80)
         self.xlabel.setWindowFlags(Qt.FramelessWindowHint)
-        self.xlabel.setText(str)
+        self.timer = QTimer()
 
+    def showOnlineMessage(self, str):
+        # x = OnlineMsg(username)
+        if not str:
+            self.xlabel.setText(str)
         pos = QDesktopWidget().availableGeometry().bottomRight()
         x = self.frameGeometry()
         x.moveCenter(pos)
@@ -232,7 +258,6 @@ class MyFrame(QMainWindow):
         self.xlabel.move(x.bottomRight())
         self.xlabel.show()
 
-        self.timer = QTimer()
         self.timer.timeout.connect(self.xlabel.close)
         self.timer.start(3000)
 
@@ -319,12 +344,15 @@ class MyFrame(QMainWindow):
         SearchText.setStyleSheet('background-color:transparent')
         SearchText.setPlaceholderText("在此输入寻找的用户名")
 
-    def loadFriends(self, friends=None):
+    def friends_init(self):
         self.Friends = QLabel(self)
         self.Friends.resize(200, 500)
         self.Friends.move(15, 185)
         self.Friends.setStyleSheet(testBorder)
+
+    def loadFriends(self, friends=None):
         if hasattr(self, "friends"):
+            self.Friends.close()
             for f in friends:
                 Friend = MyQLabel(self.Friends)
                 Friend.resize(170, 50)
@@ -344,23 +372,33 @@ class MyFrame(QMainWindow):
 
                 fname = QLabel(Friend)
                 fname.setText(f.get_name())
-                fname.move(55, 10)
+                fname.move(55, 5)
+
+                fonline = QLabel(Friend)
+                fonline.move(55, 25)
+                fonline.resize(40, 20)
+                self.friends_online[f.get_id()] = fonline
 
                 self.y += 55
+            self.Friends.show()
         if self.count == 1:  # 表示第一次加载
             QApplication.processEvents()
             self.loadMain()
             self.correct_port()
 
     def openNewChat(self, user, msg=None, datetime=None):
-        if not datetime:
-            self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self
-                                                  , selfname=self.user.get_name())
-        else:
-            print("开始执行打开窗口")
-            self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=None, parent=self
-                                                  , selfname=self.user.get_name())
-            self.chatdic[user.get_id()].show_leaving_msg(msg, datetime, user.get_name())
+        try:
+            if self.chatdic[user.get_id()]:
+                self.chatdic[user.get_id()].show()
+        except KeyError:
+            if not datetime:
+                self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self
+                                                      , selfname=self.user.get_name())
+            else:
+                print("开始执行打开窗口")
+                self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=None, parent=self
+                                                      , selfname=self.user.get_name())
+                self.chatdic[user.get_id()].show_leaving_msg(msg, datetime, user.get_name())
 
     def on_chat_close(self, uid):
         print("检测状态:", end="")

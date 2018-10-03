@@ -1,5 +1,5 @@
 # 地址
-SER_HOST = '176.234.83.81'
+SER_HOST = '127.0.0.1'
 SER_PORT = 7878
 
 # 接收数据大小
@@ -42,7 +42,8 @@ REQUEST_HEADS = {
     "DISCONNECT_HEAD": "<quit>",
     "SEND_MSG_HEAD": "<sendmsg>",  # 格式:<..>
     "CORRECT_ADDR_HEAD": "<correctaddr>",
-    "BUILD_ESTABLISH_HEAD": "<chatwidgetsock>"
+    "BUILD_ESTABLISH_HEAD": "<chatwidgetsock>",
+    "ONLINE_HEAD": "<now_online>",
 }
 
 FAILED_HEADS = {

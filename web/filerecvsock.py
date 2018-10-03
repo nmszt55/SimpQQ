@@ -81,7 +81,6 @@ class recvSock(object):
         f.close()
         return
 
-
     # 已经确保传入的是完整类型的file信息
     # 文件信息格式头+自己的地址+文件名+发送方id+md5
     @staticmethod

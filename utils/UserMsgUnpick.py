@@ -17,6 +17,7 @@ def unpick(userstr):
 def friendunpick(friends_str):
     try:
         user_list = []
+        online_list = []
         analyse_list = friends_str.split(USER_SEPARATE)
         for u in analyse_list:
             if not u:
@@ -25,8 +26,13 @@ def friendunpick(friends_str):
             usr = user(u1[0], u1[1])
             if not u1[2]:
                 usr.set_head(DEFAULT_HEAD)
+            # 生成是否在线列表
+            if u1[3] == "online":
+                online_list.append((u1[0], True))
+            else:
+                online_list.append((u1[0], False))
             user_list.append(usr)
-        return user_list
+        return user_list, online_list
     except Exception as e:
         print("分析朋友出现问题", e)
         return False
