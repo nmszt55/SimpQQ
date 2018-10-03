@@ -259,6 +259,7 @@ class ChatGui(QWidget):
         fname = f.getOpenFileName(self, "send photo", "/home/tarena/", filter="Image File(*.jpg *.png)")
         # print(fname[0].split("/")[-1])
         if fname[0]:
+            self.ChatLabel.insertHtml("<img src={} alt={}>".format(fname[0], "can found image"))
             try:
                 print("开始发送....")
                 sender = Filesocket(self.selfid, self.users[0].get_id(), fname[0].split("/")[-1], MAX_FILESEND, self.md5)

@@ -43,7 +43,7 @@ REQUEST_HEADS = {
     "SEND_MSG_HEAD": "<sendmsg>",  # 格式:<..>
     "CORRECT_ADDR_HEAD": "<correctaddr>",
     "BUILD_ESTABLISH_HEAD": "<chatwidgetsock>",
-    "ONLINE_HEAD": "<now_online>",
+    "ONLINE_HEAD": "<nowonline>",
 }
 
 FAILED_HEADS = {
