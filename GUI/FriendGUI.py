@@ -198,14 +198,16 @@ class MyFrame(QMainWindow):
             self.friends.append(usr)
             self.reload_friends(self.friends)
 
-        if datalist[0] == REQUEST_HEADS["ONLINE_HEAD"]:
-            uid = datalist[1]
+        if datalist[0] == RESPONSE_HEADS["ONLINE_HEAD"]:
+            uid = datalist[2]
             if uid in self.friends_online:
                 if hasattr(self, "friends"):
                     for x in self.friends:
                         if x.get_id() == uid:
-                            self.showOnlineMessage(x.get_name() + "Is Online")
-                            self.friends_online[uid].setText("Online")
+                            self.showOnlineMessage(x.get_name() + "上线")
+                            self.friends_online[uid].close()
+                            self.friends_online[uid].setText("上线")
+                            self.friends_online[uid].show()
 
     def update_online(self, online):
         for x in online:
@@ -247,10 +249,10 @@ class MyFrame(QMainWindow):
         self.xlabel.setWindowFlags(Qt.FramelessWindowHint)
         self.timer = QTimer()
 
-    def showOnlineMessage(self, str):
+    def showOnlineMessage(self, stri):
         # x = OnlineMsg(username)
-        if not str:
-            self.xlabel.setText(str)
+        if stri:
+            self.xlabel.setText(stri)
         pos = QDesktopWidget().availableGeometry().bottomRight()
         x = self.frameGeometry()
         x.moveCenter(pos)
@@ -259,6 +261,7 @@ class MyFrame(QMainWindow):
         self.xlabel.show()
 
         self.timer.timeout.connect(self.xlabel.close)
+        self.xlabel.show()
         self.timer.start(3000)
 
     def loadBackground(self):

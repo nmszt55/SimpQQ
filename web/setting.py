@@ -43,7 +43,7 @@ REQUEST_HEADS = {
     "SEND_MSG_HEAD": "<sendmsg>",  # 格式:<..>
     "CORRECT_ADDR_HEAD": "<correctaddr>",
     "BUILD_ESTABLISH_HEAD": "<chatwidgetsock>",
-    "ONLINE_HEAD": "<nowonline>",
+
 }
 
 FAILED_HEADS = {
@@ -72,7 +72,8 @@ RESPONSE_HEADS = {
     "ADD_FRIEND_SUCCESS": "<addfriendsuccess>",
     "CORRECT_PORT_SUCCESS": "<correctportsuccess>",
     "BULID_ESTABLISH_SUCCESS": "<connectionestablished>",
-    "FILE_DOWNLOAD_SUCCESS": "<filesuccessaa>"
+    "FILE_DOWNLOAD_SUCCESS": "<filesuccessaa>",
+    "ONLINE_HEAD": "<nowonline>",
 }
 
 RECEIVE_MSG_HEAD = {
