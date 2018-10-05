@@ -264,6 +264,7 @@ class ChatGui(QWidget):
                 print("开始发送....")
                 sender = Filesocket(self.selfid, self.users[0].get_id(), fname[0].split("/")[-1], MAX_FILESEND, self.md5)
                 sender.start()
+                print("建立文件socket成功")
                 with open(fname[0], "rb") as f:
                     while True:
                         data = f.read(1024)
@@ -274,8 +275,10 @@ class ChatGui(QWidget):
                     self.load_system_msg_in_charlabel("发送成功")
                     return True
             except IOError as e:
-                print("加载文件出现错误,发送失败",e)
+                print("加载文件出现错误,发送失败", e)
                 return False
+            finally:
+                pass
 
     def load_system_msg_in_charlabel(self, msg):
         self.ChatLabel.setTextColor(QColor(255, 0, 0))

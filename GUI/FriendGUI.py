@@ -198,16 +198,30 @@ class MyFrame(QMainWindow):
             self.friends.append(usr)
             self.reload_friends(self.friends)
 
+        # 处理上线消息
         if datalist[0] == RESPONSE_HEADS["ONLINE_HEAD"]:
             uid = datalist[2]
             if uid in self.friends_online:
+                self.friends_online[uid].close()
+                self.friends_online[uid].setText("上线")
+                self.friends_online[uid].show()
                 if hasattr(self, "friends"):
                     for x in self.friends:
                         if x.get_id() == uid:
                             self.showOnlineMessage(x.get_name() + "上线")
-                            self.friends_online[uid].close()
-                            self.friends_online[uid].setText("上线")
-                            self.friends_online[uid].show()
+
+        # 接收下线消息,处理相关结果
+        if datalist[0] == RESPONSE_HEADS["UNDERLINE_HEAD"]:
+            uid = datalist[2]
+            if uid not in self.friends_online:
+                return
+            self.friends_online[uid].close()
+            self.friends_online[uid].setText("下线")
+            self.friends_online[uid].show()
+            if hasattr(self, "friends"):
+                for x in self.friends:
+                    if x.get_id() == uid:
+                        self.showOnlineMessage(x.get_name() + "已经下线")
 
     def update_online(self, online):
         for x in online:

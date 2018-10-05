@@ -74,6 +74,7 @@ RESPONSE_HEADS = {
     "BULID_ESTABLISH_SUCCESS": "<connectionestablished>",
     "FILE_DOWNLOAD_SUCCESS": "<filesuccessaa>",
     "ONLINE_HEAD": "<nowonline>",
+    "UNDERLINE_HEAD": "<nowunderline>"
 }
 
 RECEIVE_MSG_HEAD = {

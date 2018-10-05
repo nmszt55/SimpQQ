@@ -31,6 +31,7 @@ class Mypyqt1(QWidget):
     def hand_msg(self):
         response = self.sock.read(1024).decode()
         if response.startswith(RESPONSE_HEADS["LOGIN_SUCCESS"]):
+            # 登记上次登录信息
             self.when_log_success(self.username)
             msg = response.split(SEPARATE)
             MD5 = msg[1]  # id秘钥
