@@ -77,10 +77,8 @@ class MyFrame(QMainWindow):
     def Readytoread(self, adata=None):
         if not adata:
             data = self.sock.read(MAX_DATA).decode()
-            print(data)
             if is_zhanbao(data):  #出现粘包进行分离
                 commands = zhanbao_devide(data)
-                print(commands)
                 for x in commands:
                     if not x:
                         continue
@@ -98,8 +96,8 @@ class MyFrame(QMainWindow):
             if datalist[0] == FAILED_HEADS["ILLEGAL_HEAD"]:
                 print("非法格式,请检查服务器源代码")
                 return
-            if not self.md5_analyse(datalist[-1]):
-                print("无MD5,不执行:", datalist[-1])
+            if not self.md5_analyse(data):
+                print("无MD5,不执行:", data)
                 return
             if datalist[0] == RECEIVE_MSG_HEAD["NEW_MSG_HEAD"]:
                 self.analyse_msg(data)
@@ -113,12 +111,11 @@ class MyFrame(QMainWindow):
             self.analyse_data(datalist)
         except Exception as e:
             print("分析过程出现问题", e)
+            raise e
             return
 
-    def md5_analyse(self, psw):
-        if psw.endswith(END_SEPARATE):
-            psw = psw.replace(END_SEPARATE, "")
-        if self.Key != psw:
+    def md5_analyse(self, data):
+        if self.Key != data[:-len(END_SEPARATE)]:
             return False
         else:
             return True
@@ -131,7 +128,7 @@ class MyFrame(QMainWindow):
         if msgdic["sid"] != self.user.get_id():
             print("分析结果不正却", msgdic["sid"])
             return
-        if msgdic["md5"] != self.Key:
+        if msgdic["md5"][:-len(END_SEPARATE)] != self.Key:
             print("一个不正确的md5发送过来")
             return
         for f in self.friends:

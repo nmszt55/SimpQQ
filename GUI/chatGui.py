@@ -154,7 +154,7 @@ class ChatGui(QWidget):
 
     def ready_read(self):
         newmsg = self.sock.read(1024).decode()
-
+        print("聊天窗口消息:", newmsg)
         if newmsg.startswith(FAILED_HEADS["NOT_ONLINE_ERROR"]):
             self.addTextInEdit(username="错误消息", msg="对方未登录")
             return

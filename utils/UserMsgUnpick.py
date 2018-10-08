@@ -78,7 +78,7 @@ def msg_devide(data):  # 将发送信息解包 格式:头+地址字符串+发送
         data = data.split(SEPARATE)
         oid = data[2]
         sid = data[3]
-        md5 = data[-1]
+        md5 = data[-1][:-len(END_SEPARATE)]
         dic = {"oid": oid, "sid": sid, "msg": msg[0], "md5": md5}
         return dic
 
@@ -121,6 +121,9 @@ def is_zhanbao(data):
         if x in data:
             pd += data.count(x)
     for x in FAILED_HEADS.values():
+        if x in data:
+            pd += data.count(x)
+    for x in OTHER_HEAD.values():
         if x in data:
             pd += data.count(x)
     if pd > 1:

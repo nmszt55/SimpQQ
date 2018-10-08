@@ -1,5 +1,5 @@
 # 地址
-SER_HOST = '127.0.0.1'
+SER_HOST = '176.234.83.81'
 SER_PORT = 7878
 
 # 接收数据大小
@@ -89,4 +89,6 @@ OTHER_HEAD = {
     "NEED_TO_RECV_FILES_HEAD": "<needrecvmanyfile>",
     # 带着文件信息发送到文件sock
     "FILE_INF_HEAD": "<fileinformation>",
+    # 需要接收单个文件
+    "NEED_TO_RECV_FILE_HEAD": "<usockneedrecvfile>",
 }
