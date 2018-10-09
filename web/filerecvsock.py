@@ -1,6 +1,5 @@
 from socket import *
 from threading import Thread
-
 import os
 
 from web.setting import *
@@ -10,7 +9,7 @@ class recvSock(object):
     def __init__(self, port,  selfid, maxsize=1024):
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        self.sock.bind(('127.0.0.1', port))
+        self.sock.bind(('0.0.0.0', port))
         self.sock.listen(5)
         self.sock.setblocking(False)
         self.thread_list = []
@@ -34,7 +33,6 @@ class recvSock(object):
         file_checked = False
         while True:
             data = csock.recv(self.maxsize)
-            print(data)
             # 说明已经得到文件信息,创建好了文件
             if file_checked:
                 if "f" not in locals():
@@ -112,6 +110,22 @@ class recvSock(object):
         addr += 'static/'
         return addr
 
+    @staticmethod
+    def get_host_ip():
+        """
+        查询本机ip地址
+        :return: ip
+        """
+        try:
+            s = socket(AF_INET, SOCK_DGRAM)
+            s.connect(('8.8.8.8', 80))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
+        return ip
+
+
 if __name__ == "__main__":
     x = recvSock(7895, "self")
     x.start()
+

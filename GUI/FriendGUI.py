@@ -13,8 +13,9 @@ from GUI.chatGui import ChatGui
 from GUI.DoubleClickedLabel import MyQLabel
 from GUI.AddFriend import AddFriend
 from web.setting import *
-from utils.UserMsgUnpick import friendunpick,msg_devide,addfriendunpick,leaving_msg_unpuck,is_zhanbao,zhanbao_devide
+from utils.UserMsgUnpick import *
 from domain.user import user
+from web.filerecvsock import recvSock
 import sys
 
 
@@ -76,7 +77,7 @@ class MyFrame(QMainWindow):
 
     def Readytoread(self, adata=None):
         if not adata:
-            data = self.sock.read(MAX_DATA).decode()
+            data = self.sock.read(MAX_DATA).decode(CHARSET)
             if is_zhanbao(data):  #出现粘包进行分离
                 commands = zhanbao_devide(data)
                 for x in commands:
@@ -92,6 +93,20 @@ class MyFrame(QMainWindow):
         if not data or data == "":
             return
         try:
+            if data.startswith(OTHER_HEAD["NEED_TO_RECV_FILE_HEAD"]):
+                dic = getfileinf(data)
+                if not dic:
+                    return
+                else:
+                    if dic["maxdata"]:
+                        sock = recvSock(FILE_RECV_PORT, self.user.get_id(), dic['maxdata'])
+                    else:
+                        sock = recvSock(FILE_RECV_PORT, self.user.get_id())
+                    sock.start()
+                    stri = RESPONSE_HEADS["CREATE_RECV_FILE_CONN"] + FILE_SEPARATE + self.user.get_id() + FILE_SEPARATE\
+                        + sock.get_host_ip()+":"+FILE_RECV_PORT + FILE_SEPARATE + self.Key
+                    self.sock.writeData(stri.encode(CHARSET))
+
             datalist = data.split(SEPARATE)
             if datalist[0] == FAILED_HEADS["ILLEGAL_HEAD"]:
                 print("非法格式,请检查服务器源代码")
@@ -106,8 +121,9 @@ class MyFrame(QMainWindow):
                 self.analyse_leaving_msg(data)
                 return
             if datalist[0] not in RESPONSE_HEADS.values() and datalist[0] not in FAILED_HEADS.values():
-                print("无效解析", datalist[0])
-                return
+                if datalist[0].split(FILE_SEPARATE)[0] not in OTHER_HEAD.values():
+                    print("无效解析", datalist[0])
+                    return
             self.analyse_data(datalist)
         except Exception as e:
             print("分析过程出现问题", e)
@@ -115,7 +131,7 @@ class MyFrame(QMainWindow):
             return
 
     def md5_analyse(self, data):
-        if self.Key != data[:-len(END_SEPARATE)]:
+        if not data[:-len(END_SEPARATE)].endswith(self.Key):
             return False
         else:
             return True

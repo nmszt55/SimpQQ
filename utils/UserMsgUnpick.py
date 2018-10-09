@@ -140,11 +140,25 @@ def zhanbao_devide(data):
     return li
 
 
-
+def getfileinf(data):
+    li = data.split(FILE_SEPARATE)
+    try:
+        dic = {
+            "filename": li[2],
+            "sendid": li[3],
+            "recvid": li[4],
+            "sendtime": li[5],
+            "maxdata": li[6],
+            "md5": li[7]
+        }
+        return dic
+    except Exception as e:
+        print("提取文件信息出错", e)
+        return None
 
 if __name__ == "__main__":
-    str = """
-    <leavingmsg>,176.234.83.81:40130,&start<<sadsdadsadsa&end>>,2018-09-22 21:00:24,2,12,da4b9237bacccdf19c0760cab7aec4a8359010b0<leavingmsg>,176.234.83.81:40130,&start<<dsasdadsadsaf&end>>,2018-09-22 21:00:39,2,12,da4b9237bacccdf19c0760cab7aec4a8359010b0<leavingmsg>,176.234.83.81:40130,&start<<dsdsasdasdadsasda&end>>,2018-09-22 21:00:25,2,12,da4b9237bacccdf19c0760cab7aec4a8359010b0<leavingmsg>,176.234.83.81:40130,&start<<dsadsdsadsasdasda&end>>,2018-09-22 21:00:42,2,12,da4b9237bacccdf19c0760cab7aec4a8359010b0
-    """
-    for x in zhanbao_devide(str):
-        print(x)
+    stri = OTHER_HEAD["NEED_TO_RECV_FILE_HEAD"] + FILE_SEPARATE + "188.4156.123.48:48812" + FILE_SEPARATE + "abc.img" +\
+           FILE_SEPARATE + "send666" + FILE_SEPARATE + "recv777" \
+           + FILE_SEPARATE + "2018:8:31" + FILE_SEPARATE + "1024" + \
+           FILE_SEPARATE + "asddsasdasddsasaddsad"
+    print(getfileinf(stri))

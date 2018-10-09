@@ -11,6 +11,8 @@ MAX_FILESEND = 1024
 
 # charset
 CHARSET = "utf-8"
+# 文件接收端口
+FILE_RECV_PORT = 4444
 
 # 定义分隔符
 SEPARATE = ","
@@ -74,7 +76,8 @@ RESPONSE_HEADS = {
     "BULID_ESTABLISH_SUCCESS": "<connectionestablished>",
     "FILE_DOWNLOAD_SUCCESS": "<filesuccessaa>",
     "ONLINE_HEAD": "<nowonline>",
-    "UNDERLINE_HEAD": "<nowunderline>"
+    "UNDERLINE_HEAD": "<nowunderline>",
+    "CREATE_RECV_FILE_CONN": "<createdfilesock>"
 }
 
 RECEIVE_MSG_HEAD = {
