@@ -78,7 +78,7 @@ class MyFrame(QMainWindow):
     def Readytoread(self, adata=None):
         if not adata:
             data = self.sock.read(MAX_DATA).decode(CHARSET)
-            if is_zhanbao(data):  #出现粘包进行分离
+            if is_zhanbao(data):  # 出现粘包进行分离
                 commands = zhanbao_devide(data)
                 for x in commands:
                     if not x:
@@ -131,10 +131,16 @@ class MyFrame(QMainWindow):
             return
 
     def md5_analyse(self, data):
-        if not data[:-len(END_SEPARATE)].endswith(self.Key):
-            return False
+        if data.endswith(END_SEPARATE):
+            if not data[:-len(END_SEPARATE)].endswith(self.Key):
+                return False
+            else:
+                return True
         else:
-            return True
+            if data.endswith(self.Key):
+                return True
+            else:
+                return False
 
     def analyse_leaving_msg(self, data):
         msgdic = leaving_msg_unpuck(data)
@@ -144,7 +150,7 @@ class MyFrame(QMainWindow):
         if msgdic["sid"] != self.user.get_id():
             print("分析结果不正却", msgdic["sid"])
             return
-        if msgdic["md5"][:-len(END_SEPARATE)] != self.Key:
+        if msgdic["md5"] != self.Key:
             print("一个不正确的md5发送过来")
             return
         for f in self.friends:
