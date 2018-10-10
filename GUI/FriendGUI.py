@@ -17,6 +17,8 @@ from utils.UserMsgUnpick import *
 from domain.user import user
 from web.filerecvsock import recvSock
 import sys
+import time
+from threading import Thread
 
 
 class MyFrame(QMainWindow):
@@ -29,6 +31,7 @@ class MyFrame(QMainWindow):
         self.setWindowIcon(QIcon(DEFAULT_ICON))
         self.chatdic = {}
         self.friends_online = {}  # 用来存储用户的显示上线的label
+        self.photolist = []
         self.user = user
         self.Key = MD5
         self.count = 1
@@ -60,7 +63,6 @@ class MyFrame(QMainWindow):
             self.loadSelf(Myname=self.user.get_name())  # 显示个人信息在顶上
         else:
             self.loadSelf(Img=self.user.get_head(), Myname=self.user.get_name())
-
 
     def SendRequest(self):
         self.hlabel.setText("Connecting...")
@@ -94,6 +96,7 @@ class MyFrame(QMainWindow):
             return
         try:
             if data.startswith(OTHER_HEAD["NEED_TO_RECV_FILE_HEAD"]):
+                print("接收文件启动1")
                 dic = getfileinf(data)
                 if not dic:
                     return
@@ -102,9 +105,11 @@ class MyFrame(QMainWindow):
                         sock = recvSock(FILE_RECV_PORT, self.user.get_id(), dic['maxdata'])
                     else:
                         sock = recvSock(FILE_RECV_PORT, self.user.get_id())
-                    sock.start()
+                    t = Thread(target=sock.start)
+                    t.setDaemon(True)
+                    t.start()
                     stri = RESPONSE_HEADS["CREATE_RECV_FILE_CONN"] + FILE_SEPARATE + self.user.get_id() + FILE_SEPARATE\
-                        + sock.get_host_ip()+":"+FILE_RECV_PORT + FILE_SEPARATE + self.Key
+                        + sock.get_host_ip()+":"+str(FILE_RECV_PORT) + FILE_SEPARATE + self.Key
                     self.sock.writeData(stri.encode(CHARSET))
 
             datalist = data.split(SEPARATE)
@@ -151,8 +156,11 @@ class MyFrame(QMainWindow):
             print("分析结果不正却", msgdic["sid"])
             return
         if msgdic["md5"] != self.Key:
-            print("一个不正确的md5发送过来")
-            return
+            if msgdic["md5"].endswith(END_SEPARATE):
+                if msgdic["md5"][:-len(END_SEPARATE)] != self.Key:
+                    print("一个不正确的md5发送过来", msgdic["md5"])
+                    return
+
         for f in self.friends:
             if msgdic["fromid"] == f.get_id():
                 if f.get_id() not in self.chatdic:
@@ -428,8 +436,12 @@ class MyFrame(QMainWindow):
                 self.chatdic[user.get_id()].show()
         except KeyError:
             if not datetime:
-                self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self
+                if msg:
+                    self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=msg, parent=self
                                                       , selfname=self.user.get_name())
+                else:
+                    self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=None,
+                                                          parent=self, selfname=self.user.get_name())
             else:
                 print("开始执行打开窗口")
                 self.chatdic[user.get_id()] = ChatGui(user, md5=self.Key, selfid=self.user.get_id(), msg=None, parent=self

@@ -13,7 +13,10 @@ class recvSock(object):
         self.sock.listen(5)
         self.sock.setblocking(False)
         self.thread_list = []
-        self.maxsize = maxsize
+        if type(maxsize) == str:
+            self.maxsize = int(maxsize)
+        else:
+            self.maxsize = maxsize
         self.selfid = selfid
 
     def start(self):
@@ -45,7 +48,8 @@ class recvSock(object):
                 if not data or data == b"":
                     print("接收成功")
                     csock.close()
-                    return addr+filename
+                    self.plist.append(addr+filename)
+                    return
 
                 f.write(data)
             else:
@@ -103,7 +107,7 @@ class recvSock(object):
     @staticmethod
     def get_addr():
         addr = os.getcwd()
-        if addr.endswith("web"):
+        if addr.endswith("GUI"):
             addr = addr[:-3]
         if not addr.endswith("/"):
             addr += '/'

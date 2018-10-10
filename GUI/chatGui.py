@@ -5,10 +5,13 @@ from PyQt5.QtCore import QCoreApplication, Qt, QSize
 from PyQt5.Qt import QTextEdit, QTextCursor
 from PyQt5.QtNetwork import QTcpSocket, QAbstractSocket
 
-from utils.UserMsgUnpick import msg_devide
+from threading import Thread
+
+from utils.UserMsgUnpick import *
 from web.setting import *
 from GUI.moveLabel import myLabel
 from web.filesocket import Filesocket
+from web.filerecvsock import recvSock
 import sys
 import time
 
@@ -153,8 +156,26 @@ class ChatGui(QWidget):
         return ustr
 
     def ready_read(self):
-        newmsg = self.sock.read(1024).decode()
+        newmsg = self.sock.read(1024).decode(CHARSET)
         print("聊天窗口消息:", newmsg)
+
+        if newmsg.startswith(OTHER_HEAD["NEED_TO_RECV_FILE_HEAD"]):
+            print("接收文件启动2")
+            dic = getfileinf(newmsg)
+            if not dic:
+                return
+            else:
+                if dic["maxdata"]:
+                    sock = recvSock(FILE_RECV_PORT, self.selfid, dic['maxdata'])
+                else:
+                    sock = recvSock(FILE_RECV_PORT, self.selfid)
+                t = Thread(target=sock.start)
+                t.setDaemon(True)
+                t.start()
+                stri = RESPONSE_HEADS["CREATE_RECV_FILE_CONN"] + FILE_SEPARATE + self.selfid + FILE_SEPARATE \
+                       + sock.get_host_ip() + ":" + str(FILE_RECV_PORT) + FILE_SEPARATE + self.md5
+                self.sock.writeData(stri.encode(CHARSET))
+
         if newmsg.startswith(FAILED_HEADS["NOT_ONLINE_ERROR"]):
             self.addTextInEdit(username="错误消息", msg="对方未登录")
             return
