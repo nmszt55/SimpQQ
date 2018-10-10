@@ -45,7 +45,7 @@ REQUEST_HEADS = {
     "SEND_MSG_HEAD": "<sendmsg>",  # 格式:<..>
     "CORRECT_ADDR_HEAD": "<correctaddr>",
     "BUILD_ESTABLISH_HEAD": "<chatwidgetsock>",
-
+    "CLOSE_FILE_ADDR_PORT": "<filerecvcomplete>"
 }
 
 FAILED_HEADS = {
@@ -78,6 +78,7 @@ RESPONSE_HEADS = {
     "ONLINE_HEAD": "<nowonline>",
     "UNDERLINE_HEAD": "<nowunderline>",
     "CREATE_RECV_FILE_CONN": "<createdfilesock>"
+
 }
 
 RECEIVE_MSG_HEAD = {

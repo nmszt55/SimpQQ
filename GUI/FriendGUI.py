@@ -1,8 +1,8 @@
 #coding:utf-8
-from PyQt5.QtWidgets import QPushButton,QLabel,QDesktopWidget,QMainWindow,QApplication
+from PyQt5.QtWidgets import QPushButton, QLabel, QDesktopWidget, QMainWindow, QApplication
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import QIcon,QPixmap,QPalette,QBrush
-from PyQt5.QtCore import QCoreApplication,Qt,QTimer
+from PyQt5.QtGui import QIcon, QPixmap, QPalette, QBrush
+from PyQt5.QtCore import QCoreApplication, Qt, QTimer
 from PyQt5.Qt import QLineEdit
 from PyQt5.QtNetwork import QTcpSocket
 
@@ -18,11 +18,14 @@ from domain.user import user
 from web.filerecvsock import recvSock
 import sys
 import time
+import os
+import signal
 from threading import Thread
 
 
 class MyFrame(QMainWindow):
     def __init__(self, user, MD5):
+        signal.signal(signal.SIGUSR1, self.scan_photo_list)
         super(MyFrame, self).__init__()
         self.sock = QTcpSocket()
         self.sock.connectToHost(SER_HOST, SER_PORT)
@@ -73,7 +76,6 @@ class MyFrame(QMainWindow):
         # self.sock.flush()
 
     def correct_port(self):
-        print("调整端口")
         str1 = REQUEST_HEADS["CORRECT_ADDR_HEAD"] + SEPARATE + self.user.get_id() + SEPARATE + self.Key
         self.sock.writeData(str1.encode())
 
@@ -99,13 +101,14 @@ class MyFrame(QMainWindow):
                 print("接收文件启动1")
                 dic = getfileinf(data)
                 if not dic:
+                    print("提取文件信息失败")
                     return
                 else:
                     if dic["maxdata"]:
                         sock = recvSock(FILE_RECV_PORT, self.user.get_id(), dic['maxdata'])
                     else:
                         sock = recvSock(FILE_RECV_PORT, self.user.get_id())
-                    t = Thread(target=sock.start)
+                    t = Thread(target=sock.start, args=(self, os.getpid()))
                     t.setDaemon(True)
                     t.start()
                     stri = RESPONSE_HEADS["CREATE_RECV_FILE_CONN"] + FILE_SEPARATE + self.user.get_id() + FILE_SEPARATE\
@@ -134,6 +137,30 @@ class MyFrame(QMainWindow):
             print("分析过程出现问题", e)
             raise e
             return
+
+    def scan_photo_list(self, a, b):
+        print("开始扫描队列", self.photolist)
+        if len(self.photolist) > 0:
+            for x in self.photolist:
+                self.push_photo_into_chatwid(x[0], x[1])
+                self.photolist.remove(x)
+
+    def push_photo_into_chatwid(self, sendid, photomsg):
+        try:
+            if self.chatdic[sendid]:
+                pass
+        except KeyError:
+            for x in self.friends:
+                if x.get_id() == sendid:
+                    usr = x
+            self.chatdic[sendid] = ChatGui(usr, md5=self.Key, selfid=self.user.get_id(), msg=None,
+                                                  parent=self, selfname=self.user.get_name())
+        finally:
+            self.chatdic[sendid].ChatLabel.insertHtml("<img src={} alt={} width='150' height='100'><br>".
+                                                      format(photomsg, "can found image"))
+            self.chatdic[sendid].show()
+            stri = REQUEST_HEADS["CLOSE_FILE_ADDR_PORT"] + SEPARATE + self.user.get_id()
+            self.sock.writeData(stri.encode(CHARSET))
 
     def md5_analyse(self, data):
         if data.endswith(END_SEPARATE):
@@ -451,9 +478,6 @@ class MyFrame(QMainWindow):
     def on_chat_close(self, uid):
         print("检测状态:", end="")
         print(self.chatdic.pop(uid, None))
-
-
-
 
 
 if __name__ == "__main__":

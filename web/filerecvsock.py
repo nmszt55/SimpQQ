@@ -9,7 +9,11 @@ class recvSock(object):
     def __init__(self, port,  selfid, maxsize=1024):
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        self.sock.bind(('0.0.0.0', port))
+        try:
+            self.sock.bind(('0.0.0.0', port))
+        except OSError:
+            # self.kill_port(port)
+            self.sock.bind(("0.0.0.0", port))
         self.sock.listen(5)
         self.sock.setblocking(False)
         self.thread_list = []
@@ -19,18 +23,29 @@ class recvSock(object):
             self.maxsize = maxsize
         self.selfid = selfid
 
-    def start(self):
-        while True:
-            try:
-                csock, caddr = self.sock.accept()
-            except BlockingIOError:
-                continue
-            print(caddr, "已连接")
-            t = Thread(target=self.handle_file, args=(csock,))
-            t.setDaemon(True)
-            t.start()
+    def start(self, parent, pid):
+        self.parent = parent
+        self.pid = pid
+        try:
+            while True:
+                try:
+                    csock, caddr = self.sock.accept()
+                except BlockingIOError:
+                    continue
+                print(caddr, "已连接")
+                t = Thread(target=self.handle_file, args=(csock,))
+                t.setDaemon(True)
+                t.start()
+                return
+                self.thread_list.append(t)
+        finally:
+            for x in self.thread_list:
+                x.join()
 
-            self.thread_list.append(t)
+    @staticmethod
+    def kill_port(port):
+        out = os.system('netstat -aon|findstr "4444"')
+        os.kill(out, 9)
 
     def handle_file(self, csock):
         file_checked = False
@@ -48,7 +63,10 @@ class recvSock(object):
                 if not data or data == b"":
                     print("接收成功")
                     csock.close()
-                    self.plist.append(addr+filename)
+
+                    # self.parent.push_photo_into_chatwid(fileinf["sendid"], addr+filename, self.uid, self.uname)
+                    self.parent.photolist.append([fileinf["sendid"], addr+filename])
+                    os.kill(self.pid, 10)
                     return
 
                 f.write(data)
