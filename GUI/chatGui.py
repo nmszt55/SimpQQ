@@ -43,6 +43,15 @@ class ChatGui(QWidget):
         self.initUI()
 
     def initUI(self):
+        self.setStyleSheet("""
+        QWidget{
+            background-color:#C6E2FF;
+        }
+        QLabel#Info{
+            border:1px solid #A1A1A1;
+        }
+        
+        """)
         self.loadExitLabel()
         self.resize(500, 450)
         self.setWindowFlags(Qt.FramelessWindowHint)
@@ -69,13 +78,14 @@ class ChatGui(QWidget):
         self.inf_label = QLabel(self)
         self.inf_label.resize(120, 220)
         self.inf_label.move(370, 110)
-        self.inf_label.setStyleSheet(testBorder)
+        self.inf_label.setObjectName("Info")
+        # self.inf_label.setStyleSheet(testBorder)
 
         if self.type == "sin":  # 单人聊天
             headlabel = QLabel(self.inf_label)
             headlabel.resize(70, 70)
             headlabel.move(25, 25)
-            headlabel.setStyleSheet(testBorder)
+            # headlabel.setStyleSheet(testBorder)
             if not self.users[0].get_head():
                 headlabel.setPixmap(QPixmap(DEFAULT_HEAD))
             else:

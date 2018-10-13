@@ -1,4 +1,5 @@
-#coding:utf-8
+# coding:utf-8
+#!/home/tarena/anaconda3/bin/python3.6
 import sys
 
 from PyQt5 import QtWidgets,QtGui

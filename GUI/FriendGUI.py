@@ -6,6 +6,7 @@ from PyQt5.QtCore import QCoreApplication, Qt, QTimer
 from PyQt5.Qt import QLineEdit
 from PyQt5.QtNetwork import QTcpSocket
 
+
 # from functools import partial
 # from GUI.chatGui import ChatGui
 from GUI.moveLabel import myLabel
@@ -51,6 +52,25 @@ class MyFrame(QMainWindow):
         self.x, self.y = 13, 10
 
     def __initUI(self):
+        self.setStyleSheet("""
+        QMainWindow{
+            border-radius: 10%;
+            background-color: #4169E1;
+            color: #696969;
+        }
+        MyQLabel:hover{
+            background-color: #D3D3D3;
+        }
+        MyQLabel{
+            border:1px solid #808080;
+            border-radius: 3.5%;
+        }
+        QLabel#Friends{
+            border: 1px solid #5F9EA0;
+        }
+        """)
+
+        self.setWindowOpacity(0.8)
         self.friends_init()
         self.onlinemsg_init()
         # self.showOnlineMessage(self.user.get_name()+"上线啦")
@@ -334,7 +354,7 @@ class MyFrame(QMainWindow):
 
     def loadBackground(self):
         pat = QPalette()
-        pat.setBrush(self.backgroundRole(), QBrush(QPixmap("../image/background1.jpg")))
+        # pat.setBrush(self.backgroundRole(), QBrush(QPixmap("../image/background1.jpg")))
         self.setPalette(pat)
 
     def loadMenu(self):
@@ -419,7 +439,8 @@ class MyFrame(QMainWindow):
         self.Friends = QLabel(self)
         self.Friends.resize(200, 500)
         self.Friends.move(15, 185)
-        self.Friends.setStyleSheet(testBorder)
+        self.Friends.setObjectName("Friends")
+        # self.Friends.setStyleSheet(testBorder)
 
     def loadFriends(self, friends=None):
         if hasattr(self, "friends"):
@@ -429,14 +450,14 @@ class MyFrame(QMainWindow):
                 Friend.resize(170, 50)
                 Friend.move(self.x, self.y)
                 Friend.set_user(f, self)
-                Friend.setStyleSheet(testBorder)
+                # Friend.setStyleSheet(testBorder)
 
                 head = f.get_head()
                 if not head:
                     head = DEFAULT_HEAD
                 fHead = QLabel(Friend)
                 fHead.resize(40, 40)
-                fHead.setStyleSheet(testBorder)
+                # fHead.setStyleSheet(testBorder)
                 fHead.setPixmap(QPixmap(head))
                 fHead.setScaledContents(True)
                 fHead.move(5, 5)
