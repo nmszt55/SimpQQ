@@ -269,6 +269,8 @@ class MyFrame(QMainWindow):
                 usr.set_head(datalist[1].split(ATTR_SERARATE)[2])
             except:
                 usr.set_head(DEFAULT_HEAD)
+            if not hasattr(self, "friends"):
+                self.friends = []
             self.friends.append(usr)
             self.reload_friends(self.friends)
 

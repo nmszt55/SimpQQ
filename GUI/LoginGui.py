@@ -220,7 +220,7 @@ class Mypyqt1(QWidget):
         # self.setLayout(vbox)
 
     def registerHtml(self):
-        QtGui.QDesktopServices.openUrl(QUrl('http://localhost:8081/register.html'))
+        QtGui.QDesktopServices.openUrl(QUrl('http://176.234.83.213:5000/'))
 
 
     #经典布局框架，剩余空间被text占用
