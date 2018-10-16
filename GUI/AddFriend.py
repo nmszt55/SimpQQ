@@ -16,6 +16,15 @@ class AddFriend(QWidget):
         self.loadInput()
         self.loadSubmit()
         self.hidelabel()
+        self.setStyleSheet("""
+            QWidget{
+                background-color: #4169E1;
+            }
+            QWidget#msgLabel{
+                font-size: 40px;
+                font-family: 'Microsoft Yahei';
+            }
+        """)
         # self.loadbackground()
         # self.loadHiddenLabel()
         # self.loadExitMenu()
@@ -98,7 +107,8 @@ class AddFriend(QWidget):
     def loadFriend(self):
         if not hasattr(self, "friend"):
             self.nullLabel = QLabel(self)
-            self.nullLabel.resize(300, 250)
+            self.nullLabel.setObjectName("msgLabel")
+            self.nullLabel.resize(300, 200)
             self.nullLabel.setText("点击按钮查找>-<")
             self.nullLabel.move(25, 25)
         else:

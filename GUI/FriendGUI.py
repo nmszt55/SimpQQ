@@ -66,6 +66,7 @@ class MyFrame(QMainWindow):
             border-radius: 3.5%;
         }
         QLabel#Friends{
+            background-color: #6495ED;
             border: 1px solid #5F9EA0;
         }
         """)
@@ -98,6 +99,22 @@ class MyFrame(QMainWindow):
     def correct_port(self):
         str1 = REQUEST_HEADS["CORRECT_ADDR_HEAD"] + SEPARATE + self.user.get_id() + SEPARATE + self.Key
         self.sock.writeData(str1.encode())
+
+    def friends_search(self):
+        if not hasattr(self, "friends"):
+            return
+        text = self.SearchText.text()
+        if not text:
+            self.reload_friends(self.friends)
+            return
+        fs = []
+        for x in self.friends:
+            if text in x.get_name() or text in str(x.get_id()):
+                fs.append(x)
+        if len(fs) == 0:
+            self.reload_friends(None)
+        else:
+            self.reload_friends(fs)
 
     def Readytoread(self, adata=None):
         if not adata:
@@ -307,10 +324,11 @@ class MyFrame(QMainWindow):
                 self.friends_online[x[0]].setText("下线")
 
     def reload_friends(self, fris):
-        self.Friends.close()
+        # self.Friends.clear()
+        # self.Friends.close()
         self.resetFriendlocation()
         self.loadFriends(fris)
-        self.Friends.show()
+        # self.Friends.show()
 
     def analyse_msg(self, data):
         datadic = msg_devide(data)
@@ -431,11 +449,12 @@ class MyFrame(QMainWindow):
         name.move(95, 40)
 
     def loadSearch(self):
-        SearchText = QLineEdit(self)
-        SearchText.resize(200, 30)
-        SearchText.move(15, 140)
-        SearchText.setStyleSheet('background-color:transparent')
-        SearchText.setPlaceholderText("在此输入寻找的用户名")
+        self.SearchText = QLineEdit(self)
+        self.SearchText.resize(200, 30)
+        self.SearchText.move(15, 140)
+        self.SearchText.setStyleSheet('background-color:transparent')
+        self.SearchText.setPlaceholderText("在此输入寻找的用户名")
+        self.SearchText.textChanged.connect(self.friends_search)
 
     def friends_init(self):
         self.Friends = QLabel(self)
@@ -445,8 +464,13 @@ class MyFrame(QMainWindow):
         # self.Friends.setStyleSheet(testBorder)
 
     def loadFriends(self, friends=None):
-        if hasattr(self, "friends"):
+        if not friends:
             self.Friends.close()
+            # self.Friends.setText("查找不到好友")
+            return
+        if friends:
+            del self.Friends
+            self.friends_init()
             for f in friends:
                 Friend = MyQLabel(self.Friends)
                 Friend.resize(170, 50)
@@ -479,6 +503,7 @@ class MyFrame(QMainWindow):
             QApplication.processEvents()
             self.loadMain()
             self.correct_port()
+            self.count += 1
 
     def openNewChat(self, user, msg=None, datetime=None):
         try:
