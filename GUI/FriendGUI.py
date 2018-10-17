@@ -2,7 +2,7 @@
 from PyQt5.QtWidgets import QPushButton, QLabel, QDesktopWidget, QMainWindow, QApplication
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QIcon, QPixmap, QPalette, QBrush
-from PyQt5.QtCore import QCoreApplication, Qt, QTimer
+from PyQt5.QtCore import QCoreApplication, Qt, QTimer, QThread
 from PyQt5.Qt import QLineEdit
 from PyQt5.QtNetwork import QTcpSocket
 
@@ -26,7 +26,7 @@ from threading import Thread
 
 class MyFrame(QMainWindow):
     def __init__(self, user, MD5):
-        signal.signal(signal.SIGUSR1, self.scan_photo_list)
+        signal.signal(signal.SIGSEGV, signal.SIG_IGN)
         super(MyFrame, self).__init__()
         self.sock = QTcpSocket()
         self.sock.connectToHost(SER_HOST, SER_PORT)
@@ -46,7 +46,20 @@ class MyFrame(QMainWindow):
 
         self.addfriend = AddFriend()
         self.__initUI()
+
+        class Mythread(QThread):
+            def __init__(self, parent):
+                self.parent = parent
+                super(QThread, self).__init__()
+
+            def run(self):
+                self.parent.scan_photo_list()
+
+        q = Mythread(self)
+        q.start()
         self.show()
+        # q.wait()
+
 
     def resetFriendlocation(self):
         self.x, self.y = 13, 10
@@ -104,6 +117,7 @@ class MyFrame(QMainWindow):
         if not hasattr(self, "friends"):
             return
         text = self.SearchText.text()
+        print(text)
         if not text:
             self.reload_friends(self.friends)
             return
@@ -112,7 +126,7 @@ class MyFrame(QMainWindow):
             if text in x.get_name() or text in str(x.get_id()):
                 fs.append(x)
         if len(fs) == 0:
-            self.reload_friends(None)
+            self.reload_friends("None")
         else:
             self.reload_friends(fs)
 
@@ -142,12 +156,34 @@ class MyFrame(QMainWindow):
                     return
                 else:
                     if dic["maxdata"]:
-                        sock = recvSock(FILE_RECV_PORT, self.user.get_id(), dic['maxdata'])
+                        sock = recvSock(FILE_RECV_PORT, self.user.get_id(), self, os.getpid(), dic['maxdata'])
                     else:
-                        sock = recvSock(FILE_RECV_PORT, self.user.get_id())
-                    t = Thread(target=sock.start, args=(self, os.getpid()))
-                    t.setDaemon(True)
-                    t.start()
+                        sock = recvSock(FILE_RECV_PORT, self.user.get_id(), self, os.getpid())
+                    #
+                    # class recvThread(QThread):
+                    #     def __init__(self, sock, parent, pid):
+                    #         self.sock = sock
+                    #         self.parent = parent
+                    #         self.pid = pid
+                    #         super(QThread, self).__init__()
+                    #
+                    #     def run(self):
+                    #         self.sock.start(self.parent, self.pid)
+                    #
+                    # t = recvThread(sock, self, os.getpid())
+                    # t.start()
+                    # t.wait()
+                    #--------------------------------------------------
+                    # t = Thread(target=sock.start, args=(self, os.getpid()))
+                    # t.setDaemon(True)
+                    # t.start()
+                    signal.signal(signal.SIGSEGV, signal.SIG_IGN)
+                    sock.start()
+
+                    def rem_sock():
+                        nonlocal sock
+                        del sock
+                    sock.finished.connect(rem_sock)
                     stri = RESPONSE_HEADS["CREATE_RECV_FILE_CONN"] + FILE_SEPARATE + self.user.get_id() + FILE_SEPARATE\
                         + sock.get_host_ip()+":"+str(FILE_RECV_PORT) + FILE_SEPARATE + self.Key
                     self.sock.writeData(stri.encode(CHARSET))
@@ -175,17 +211,24 @@ class MyFrame(QMainWindow):
             raise e
             return
 
-    def scan_photo_list(self, a, b):
-        print("开始扫描队列", self.photolist)
-        if len(self.photolist) > 0:
-            for x in self.photolist:
-                self.push_photo_into_chatwid(x[0], x[1])
-                self.photolist.remove(x)
+    def scan_photo_list(self):
+        print("runing")
+        # while True:
+        while True:
+            if self.photolist:
+                print("开始扫描队列", self.photolist)
+                if len(self.photolist) > 0:
+                    for x in self.photolist:
+                        self.push_photo_into_chatwid(x[0], x[1])
+                        self.photolist.remove(x)
+        # return
+            time.sleep(1)
 
     def push_photo_into_chatwid(self, sendid, photomsg):
         try:
             if self.chatdic[sendid]:
-                pass
+                # self.chatdic.close()
+                self.chatdic[sendid].show()
         except KeyError:
             for x in self.friends:
                 if x.get_id() == sendid:
@@ -193,9 +236,9 @@ class MyFrame(QMainWindow):
             self.chatdic[sendid] = ChatGui(usr, md5=self.Key, selfid=self.user.get_id(), msg=None,
                                                   parent=self, selfname=self.user.get_name())
         finally:
+            # self.chatdic[sendid].show()
             self.chatdic[sendid].ChatLabel.insertHtml("<img src={} alt={} width='150' height='100'><br>".
                                                       format(photomsg, "can found image"))
-            self.chatdic[sendid].show()
             stri = REQUEST_HEADS["CLOSE_FILE_ADDR_PORT"] + SEPARATE + self.user.get_id()
             self.sock.writeData(stri.encode(CHARSET))
 
@@ -464,13 +507,21 @@ class MyFrame(QMainWindow):
         # self.Friends.setStyleSheet(testBorder)
 
     def loadFriends(self, friends=None):
-        if not friends:
-            self.Friends.close()
+        if not friends or friends == "None":
+            if hasattr(self, "Friends"):
+                self.Friends.clear()
+                self.Friends.close()
+                del self.Friends
             # self.Friends.setText("查找不到好友")
             return
         if friends:
-            del self.Friends
-            self.friends_init()
+            if hasattr(self, "Friends"):
+                self.Friends.clear()
+                self.Friends.close()
+                del self.Friends
+                self.friends_init()
+            if not hasattr(self, "Friends"):
+                self.friends_init()
             for f in friends:
                 Friend = MyQLabel(self.Friends)
                 Friend.resize(170, 50)

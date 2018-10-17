@@ -1,12 +1,15 @@
 from socket import *
 from threading import Thread
 import os
-
+import signal
 from web.setting import *
+from PyQt5.QtCore import QThread
 
 
-class recvSock(object):
-    def __init__(self, port,  selfid, maxsize=1024):
+class recvSock(QThread):
+    def __init__(self, port,  selfid, parent, pid, maxsize=1024):
+        self.parent = parent
+        self.pid = pid
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         try:
@@ -15,29 +18,28 @@ class recvSock(object):
             # self.kill_port(port)
             self.sock.bind(("0.0.0.0", port))
         self.sock.listen(5)
-        self.sock.setblocking(False)
+        # self.sock.setblocking(False)
         self.thread_list = []
         if type(maxsize) == str:
             self.maxsize = int(maxsize)
         else:
             self.maxsize = maxsize
         self.selfid = selfid
+        super(QThread, self).__init__()
 
-    def start(self, parent, pid):
-        self.parent = parent
-        self.pid = pid
+    def run(self):
         try:
-            while True:
-                try:
-                    csock, caddr = self.sock.accept()
-                except BlockingIOError:
-                    continue
-                print(caddr, "已连接")
-                t = Thread(target=self.handle_file, args=(csock,))
-                t.setDaemon(True)
-                t.start()
-                return
-                self.thread_list.append(t)
+            try:
+                csock, caddr = self.sock.accept()
+                print("下载连接建立")
+            except BlockingIOError:
+                pass
+            # print(caddr, "已连接")
+            # t = Thread(target=self.handle_file, args=(csock, self.parent))
+            # t.start()
+            # self.parent.thread_list.append(t)
+            # t.join()
+            self.handle_file(csock, self.parent)
         finally:
             for x in self.thread_list:
                 x.join()
@@ -45,9 +47,9 @@ class recvSock(object):
     @staticmethod
     def kill_port(port):
         out = os.system('netstat -aon|findstr "4444"')
-        os.kill(out, 9)
+        os.kill(out, signal.SIGVTALRM)
 
-    def handle_file(self, csock):
+    def handle_file(self, csock, parent):
         file_checked = False
         while True:
             data = csock.recv(self.maxsize)
@@ -65,8 +67,10 @@ class recvSock(object):
                     csock.close()
 
                     # self.parent.push_photo_into_chatwid(fileinf["sendid"], addr+filename, self.uid, self.uname)
-                    self.parent.photolist.append([fileinf["sendid"], addr+filename])
-                    os.kill(self.pid, 10)
+                    parent.photolist.append([fileinf["sendid"], addr+filename])
+                    # os.kill(self.pid, 26)
+                    # parent.scan_photo_list()
+                    self.quit()
                     return
 
                 f.write(data)
