@@ -3,12 +3,12 @@ from threading import Thread
 import os
 import signal
 from web.setting import *
+from utils.Mythread import Mythread
 from PyQt5.QtCore import QThread
 
-
-class recvSock(QThread):
-    def __init__(self, port,  selfid, parent, pid, maxsize=1024):
-        self.parent = parent
+class recvSock(Mythread):
+    def __init__(self, port, list, selfid, pid, maxsize=1024):
+        self.list = list
         self.pid = pid
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
@@ -39,10 +39,12 @@ class recvSock(QThread):
             # t.start()
             # self.parent.thread_list.append(t)
             # t.join()
-            self.handle_file(csock, self.parent)
-        finally:
-            for x in self.thread_list:
-                x.join()
+            data = self.handle_file(csock, self.parent)
+            self.list.append(data)
+            self.quit()
+            return
+        except Exception as e:
+            print("接收文件出现问题", e)
 
     @staticmethod
     def kill_port(port):
@@ -67,11 +69,9 @@ class recvSock(QThread):
                     csock.close()
 
                     # self.parent.push_photo_into_chatwid(fileinf["sendid"], addr+filename, self.uid, self.uname)
-                    parent.photolist.append([fileinf["sendid"], addr+filename])
                     # os.kill(self.pid, 26)
                     # parent.scan_photo_list()
-                    self.quit()
-                    return
+                    return [fileinf["sendid"], addr+filename]
 
                 f.write(data)
             else:

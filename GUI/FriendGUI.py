@@ -15,13 +15,14 @@ from GUI.DoubleClickedLabel import MyQLabel
 from GUI.AddFriend import AddFriend
 from web.setting import *
 from utils.UserMsgUnpick import *
+from utils.Mythread import Mythread
+from threading import Thread
 from domain.user import user
 from web.filerecvsock import recvSock
 import sys
 import time
 import os
 import signal
-from threading import Thread
 
 
 class MyFrame(QMainWindow):
@@ -46,20 +47,23 @@ class MyFrame(QMainWindow):
 
         self.addfriend = AddFriend()
         self.__initUI()
+        self.scan_timer()
+        # self.show()
+        self.loadMain()
 
-        class Mythread(QThread):
-            def __init__(self, parent):
-                self.parent = parent
-                super(QThread, self).__init__()
+    def scan_timer(self):
+        self.s = QTimer()
+        self.s.start(1000)
+        self.s.timeout.connect(self.push_photo)
 
-            def run(self):
-                self.parent.scan_photo_list()
-
-        q = Mythread(self)
-        q.start()
-        self.show()
-        # q.wait()
-
+    def push_photo(self):
+        if self.photolist:
+            print("队列检测到图片")
+            for x in self.photolist:
+                self.push_photo_into_chatwid(x[0], x[1])
+                self.photolist.remove(x)
+        del self.s
+        self.scan_timer()
 
     def resetFriendlocation(self):
         self.x, self.y = 13, 10
@@ -156,10 +160,9 @@ class MyFrame(QMainWindow):
                     return
                 else:
                     if dic["maxdata"]:
-                        sock = recvSock(FILE_RECV_PORT, self.user.get_id(), self, os.getpid(), dic['maxdata'])
+                        sock = recvSock(FILE_RECV_PORT, self.photolist, self.user.get_id(), os.getpid(), dic['maxdata'])
                     else:
-                        sock = recvSock(FILE_RECV_PORT, self.user.get_id(), self, os.getpid())
-                    #
+                        sock = recvSock(FILE_RECV_PORT, self.photolist, self.user.get_id(), os.getpid())
                     # class recvThread(QThread):
                     #     def __init__(self, sock, parent, pid):
                     #         self.sock = sock
@@ -177,11 +180,13 @@ class MyFrame(QMainWindow):
                     # t = Thread(target=sock.start, args=(self, os.getpid()))
                     # t.setDaemon(True)
                     # t.start()
-                    signal.signal(signal.SIGSEGV, signal.SIG_IGN)
+
                     sock.start()
 
                     def rem_sock():
+                        print("删除线程")
                         nonlocal sock
+                        sock.exit()
                         del sock
                     sock.finished.connect(rem_sock)
                     stri = RESPONSE_HEADS["CREATE_RECV_FILE_CONN"] + FILE_SEPARATE + self.user.get_id() + FILE_SEPARATE\
@@ -219,8 +224,7 @@ class MyFrame(QMainWindow):
                 print("开始扫描队列", self.photolist)
                 if len(self.photolist) > 0:
                     for x in self.photolist:
-                        self.push_photo_into_chatwid(x[0], x[1])
-                        self.photolist.remove(x)
+                        pass
         # return
             time.sleep(1)
 
